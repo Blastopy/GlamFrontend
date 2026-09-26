@@ -1,0 +1,1 @@
+import{M as e}from"./index-CkaJJZDm.js";const p={list(r={}){return e.get("/providers",{params:r})},show(r){return e.get(`/providers/${r}`)},services(r){return e.get(`/providers/${r}/services`)},updateProfile(r){return e.patch("/provider/profile",r)},toggleOpen(r){return e.patch("/provider/status",r)}};export{p};
