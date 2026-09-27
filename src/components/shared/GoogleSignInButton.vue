@@ -9,7 +9,7 @@ function render() {
   if (!window.google?.accounts?.id) return false
 
   window.google.accounts.id.initialize({
-    client_id: 882205745246-5ugo8ga9p0uo1470rsad41c31eqhgvts.apps.googleusercontent.com
+    client_id: '882205745246-5ugo8ga9p0uo1470rsad41c31eqhgvts.apps.googleusercontent.com'
     callback: (response) => emit('credential', response.credential),
   })
 
