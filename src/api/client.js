@@ -4,7 +4,7 @@ import { useLoadingStore } from '@/stores/loading'
 
 const api = axios.create({
   // baseURL: '/api/v1',
-  baseURL: `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api/v1`,
+  baseURL: `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api/v1`, 
   headers: { Accept: 'application/json' },
   timeout: 20000, // fail fast rather than hanging forever on a dead connection
 })
