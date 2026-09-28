@@ -25,7 +25,7 @@ export function initEcho() {
     wssPort: 443,
     forceTLS: 'http' === 'https',
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: 'glam-ceok.onrender.com/broadcasting/auth',
+    authEndpoint: 'https://glam-ceok.onrender.com/broadcasting/auth',
     auth: {
       headers: {
         Authorization: `Bearer ${token}`,
