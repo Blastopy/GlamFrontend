@@ -19,13 +19,13 @@ export function initEcho() {
 
   echoInstance = new Echo({
     broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT,
-    wssPort: import.meta.env.VITE_REVERB_PORT,
-    forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
+    key: 'rz0okdtx7nfbojbzb77y',
+    wsHost: 'glam-ceok.onrender.com',
+    wsPort: 8080,
+    wssPort: 8080,
+    forceTLS: 'http' === 'https',
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: `${import.meta.env.VITE_API_URL}/broadcasting/auth`,
+    authEndpoint: 'glam-ceok.onrender.com/broadcasting/auth',
     auth: {
       headers: {
         Authorization: `Bearer ${token}`,
