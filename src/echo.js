@@ -20,7 +20,7 @@ export function initEcho() {
   echoInstance = new Echo({
     broadcaster: 'reverb',
     key: 'rz0okdtx7nfbojbzb77y',
-    wsHost: 'glam-ceok.onrender.com',
+    wsHost: 'glam-reverb.onrender.com',
     wsPort: 443,
     wssPort: 443,
     forceTLS: 'http' === 'https',
