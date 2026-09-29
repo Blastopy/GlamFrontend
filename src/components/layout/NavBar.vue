@@ -16,7 +16,11 @@ let badgeTimer = null
 async function handleLogout() {
   menuOpen.value = false
   await auth.logout()
-  router.push({ name: 'login' })
+  // Every role lands on the public discover page after logging out — it's
+  // browsable without an account, so this isn't a dead end the way a forced
+  // login screen would be. Deliberately the same target regardless of
+  // whether they were a client, provider, or admin.
+  router.push({ name: 'discover' })
 }
 
 watch(() => route.fullPath, () => {

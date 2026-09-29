@@ -150,7 +150,28 @@ onBeforeUnmount(() => {
   unsubscribeFromChannel()
 })
 
-function goToDashboard() {
+async function goToDashboard() {
+  // Re-sync from the server right before navigating, regardless of what
+  // already happened upstream — this is the last line of defense against
+  // the router guard on /dashboard seeing stale cached auth state.
+  try {
+    await auth.refreshUser()
+  } catch {
+    // if this fails, whatever local state we already have (from
+    // setProviderSubscriptionActive in handleSuccess) is the fallback
+  }
+
+  if (stage.value === 'success') {
+    // Coming straight from a just-confirmed payment: use a full page
+    // navigation rather than router.push. This guarantees the app reboots
+    // and re-reads localStorage from scratch — the freshest possible state —
+    // rather than trusting any in-memory Pinia/router state that might have
+    // gotten out of sync during the payment flow. Costs a page reload, but
+    // this is a one-off post-payment click, not a frequent navigation.
+    window.location.href = '/dashboard'
+    return
+  }
+
   router.push({ name: 'provider-dashboard' })
 }
 
