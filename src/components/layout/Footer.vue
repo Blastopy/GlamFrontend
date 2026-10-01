@@ -4,7 +4,7 @@ const year = new Date().getFullYear()
 // Update these with the business's real details/handles before launch.
 const contact = {
   email: 'hello@mystyle.com',
-  phone: '+254 710 634 972',
+  phone: '+254 716 065 893',
 }
 
 const socials = [
