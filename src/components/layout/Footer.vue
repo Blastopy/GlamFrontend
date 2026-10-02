@@ -33,6 +33,12 @@ const socials = [
       </div>
 
       <div>
+        <h3 class="text-sm font-medium text-ink mb-2">Legal</h3>
+        <a :href="`mailto:${contact.email}`" class="block text-sm text-ink-soft hover:text-clay-600">Privacy Policy</a>
+        <a :href="`tel:${contact.phone.replace(/\s/g, '')}`" class="block text-sm text-ink-soft hover:text-clay-600 mt-1">Terms and Conditions</a>
+      </div>
+
+      <div>
         <h3 class="text-sm font-medium text-ink mb-2">Follow us</h3>
         <div class="flex items-center gap-3">
           <a v-for="s in socials" :key="s.name" :href="s.href" target="_blank" rel="noopener"

@@ -208,7 +208,7 @@ function formatReviewDate(d) {
             <span v-if="providers.current.is_verified" class="text-xs px-2 py-0.5 rounded-full bg-sage-500 text-white">Verified</span>
             <span v-if="providers.current.offers_home_service" class="text-xs px-2 py-0.5 rounded-full bg-clay-100 text-clay-700 border border-clay-200">
               🏠 Home visits{{ homeServiceFee ? ` (+KES ${homeServiceFee.toLocaleString()})` : '' }}
-            </span>
+            </span> 
           </h1>
           <p class="text-sm text-ink-soft capitalize">{{ providers.current.provider_type }} · {{ providers.current.address }}</p>
           <p class="text-sm text-ink-soft mt-1">
