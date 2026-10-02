@@ -5,6 +5,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 import { extractErrorMessage } from '@/utils/errors'
 import { getEcho } from '@/echo'
+import subscriptionApi from '@/api/subscription'
+import providerAnalyticsApi from '@/api/providerAnalytics'
+import ClientsLineChart from '@/components/charts/ClientsLineChart.vue'
 
 const store = useAppointmentsStore()
 const auth = useAuthStore()
@@ -13,6 +16,10 @@ const filterStatus = ref('')
 const toast = ref('')
 const loading = ref(true)
 let channel = null
+
+const subscription = ref(null) // { is_active, expires_at, days_left, payments_enabled }
+const clientStats = ref(null)
+const analyticsLoading = ref(true)
 
 async function load() {
   loading.value = true
@@ -25,6 +32,22 @@ async function load() {
   }
 }
 
+async function loadSidebarData() {
+  analyticsLoading.value = true
+  try {
+    const [subRes, clientsRes] = await Promise.all([
+      subscriptionApi.status(),
+      providerAnalyticsApi.clients(),
+    ])
+    subscription.value = subRes.data
+    clientStats.value = clientsRes.data
+  } catch {
+    // non-critical widgets — the main bookings list above still works without them
+  } finally {
+    analyticsLoading.value = false
+  }
+}
+
 function flashToast(msg) {
   toast.value = msg
   setTimeout(() => (toast.value = ''), 4000)
@@ -32,6 +55,7 @@ function flashToast(msg) {
 
 onMounted(() => {
   load()
+  loadSidebarData()
 
   const providerProfileId = auth.user.providerProfile?.id || auth.user.provider_profile?.id
   channel = getEcho()?.private(`provider.${providerProfileId}`)
@@ -49,6 +73,10 @@ onMounted(() => {
     .listen('.deposit.confirmed', () => {
       flashToast('A deposit was just confirmed')
       load()
+    })
+    .listen('.subscription.confirmed', () => {
+      flashToast('Your subscription payment was confirmed')
+      loadSidebarData()
     })
 })
 
@@ -70,6 +98,13 @@ function homeDirectionsUrl(appt) {
   return `https://www.google.com/maps/dir/?api=1&destination=${appt.home_latitude},${appt.home_longitude}`
 }
 
+const subscriptionBannerStyle = computed(() => {
+  if (!subscription.value || subscription.value.payments_enabled === false) return null
+  if (!subscription.value.is_active) return 'expired'
+  if (subscription.value.days_left <= 5) return 'warning'
+  return 'ok'
+})
+
 const statusColor = {
   pending: 'bg-yellow-100 text-yellow-700',
   confirmed: 'bg-blue-100 text-blue-700',
@@ -82,8 +117,59 @@ const statusColor = {
 
 <template>
   <div>
+    <!-- Subscription status — only shown at all while the admin has payments enabled -->
+    <div v-if="subscriptionBannerStyle" :class="[
+      'mb-4 px-4 py-3 rounded-lg text-sm flex flex-wrap items-center justify-between gap-2',
+      subscriptionBannerStyle === 'expired' ? 'bg-red-50 border border-red-200 text-red-700' :
+      subscriptionBannerStyle === 'warning' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
+      'bg-sage-50 border border-sage-200 text-sage-700',
+    ]">
+      <span v-if="subscriptionBannerStyle === 'expired'">Your subscription has expired — you're not visible to clients right now.</span>
+      <span v-else>{{ subscription.days_left }} day{{ subscription.days_left === 1 ? '' : 's' }} left on your subscription</span>
+      <RouterLink to="/provider/activate" class="underline font-medium shrink-0">
+        {{ subscriptionBannerStyle === 'expired' ? 'Renew now' : 'Manage subscription' }}
+      </RouterLink>
+    </div>
+
     <div v-if="toast" class="mb-4 px-4 py-2 bg-clay-50 border border-clay-200 text-clay-700 rounded-lg text-sm">
       {{ toast }}
+    </div>
+
+    <!-- Client analytics -->
+    <div class="mb-6">
+      <h2 class="text-base font-semibold text-ink mb-3">Your clients</h2>
+
+      <p v-if="analyticsLoading" class="text-gray-400 text-sm">Loading…</p>
+
+      <template v-else-if="clientStats">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="bg-white rounded-xl border border-gray-100 p-3">
+            <p class="text-xs text-gray-500">Total clients</p>
+            <p class="text-xl font-semibold text-ink">{{ clientStats.total_clients }}</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 p-3">
+            <p class="text-xs text-gray-500">New this month</p>
+            <p class="text-xl font-semibold text-ink">{{ clientStats.new_clients_this_month }}</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 p-3">
+            <p class="text-xs text-gray-500">Repeat clients</p>
+            <p class="text-xl font-semibold text-ink">{{ clientStats.repeat_clients }}
+              <span class="text-xs font-normal text-gray-400">({{ Math.round(clientStats.repeat_rate * 100) }}%)</span>
+            </p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 p-3">
+            <p class="text-xs text-gray-500">Avg. rating</p>
+            <p class="text-xl font-semibold text-ink">⭐ {{ clientStats.average_rating.toFixed(1) }}
+              <span class="text-xs font-normal text-gray-400">({{ clientStats.reviews_count }})</span>
+            </p>
+          </div>
+        </div>
+
+        <div v-if="clientStats.new_clients_series?.values?.some(v => v > 0)" class="bg-white rounded-xl border border-gray-100 p-4">
+          <p class="text-sm font-medium text-ink mb-2">New clients (last 30 days)</p>
+          <ClientsLineChart :labels="clientStats.new_clients_series.labels" :values="clientStats.new_clients_series.values" />
+        </div>
+      </template>
     </div>
 
     <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
