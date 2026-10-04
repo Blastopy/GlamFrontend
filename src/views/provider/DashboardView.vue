@@ -8,6 +8,7 @@ import { getEcho } from '@/echo'
 import subscriptionApi from '@/api/subscription'
 import providerAnalyticsApi from '@/api/providerAnalytics'
 import ClientsLineChart from '@/components/charts/ClientsLineChart.vue'
+import { usePushNotifications } from '@/composables/usePushNotifications'
 
 const store = useAppointmentsStore()
 const auth = useAuthStore()
@@ -20,6 +21,27 @@ let channel = null
 const subscription = ref(null) // { is_active, expires_at, days_left, payments_enabled }
 const clientStats = ref(null)
 const analyticsLoading = ref(true)
+
+const push = usePushNotifications()
+const showPushPrompt = ref(false)
+
+async function checkPushPromptVisibility() {
+  if (!push.isSupported || push.permission.value === 'denied') {
+    showPushPrompt.value = false
+    return
+  }
+  showPushPrompt.value = !(await push.isCurrentlySubscribed())
+}
+
+async function enablePushNotifications() {
+  const ok = await push.subscribe()
+  if (ok) {
+    showPushPrompt.value = false
+    notifications.success("You'll now get a notification when someone books.")
+  } else if (push.permission.value === 'denied') {
+    notifications.error('Notifications were blocked — enable them in your browser settings to turn this back on.')
+  }
+}
 
 async function load() {
   loading.value = true
@@ -56,6 +78,7 @@ function flashToast(msg) {
 onMounted(() => {
   load()
   loadSidebarData()
+  checkPushPromptVisibility()
 
   const providerProfileId = auth.user.providerProfile?.id || auth.user.provider_profile?.id
   channel = getEcho()?.private(`provider.${providerProfileId}`)
@@ -117,6 +140,15 @@ const statusColor = {
 
 <template>
   <div>
+    <!-- Push notifications prompt — shown once until they enable or the browser blocks it -->
+    <div v-if="showPushPrompt" class="mb-4 px-4 py-3 rounded-lg text-sm bg-blue-50 border border-blue-200 text-blue-700 flex flex-wrap items-center justify-between gap-3">
+      <span>Get a notification — with one-tap Accept/Decline — the moment someone books.</span>
+      <button @click="enablePushNotifications" :disabled="push.subscribing.value"
+        class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium shrink-0 disabled:opacity-50">
+        {{ push.subscribing.value ? 'Enabling…' : 'Enable notifications' }}
+      </button>
+    </div>
+
     <!-- Subscription status — only shown at all while the admin has payments enabled -->
     <div v-if="subscriptionBannerStyle" :class="[
       'mb-4 px-4 py-3 rounded-lg text-sm flex flex-wrap items-center justify-between gap-2',
