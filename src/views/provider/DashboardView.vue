@@ -30,9 +30,7 @@ async function checkPushPromptVisibility() {
     showPushPrompt.value = false
     return
   }
-  // showPushPrompt.value = !(await push.isCurrentlySubscribed())
-  showPushPrompt.value = true
-
+  showPushPrompt.value = !(await push.isCurrentlySubscribed())
 }
 
 async function enablePushNotifications() {
