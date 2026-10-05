@@ -26,11 +26,13 @@ const push = usePushNotifications()
 const showPushPrompt = ref(false)
 
 async function checkPushPromptVisibility() {
-  if (!push.isSupported.value || push.permission.value === 'denied') {
+  if (!push.isSupported || push.permission.value === 'denied') {
     showPushPrompt.value = false
     return
   }
-  showPushPrompt.value = !(await push.isCurrentlySubscribed())
+  // showPushPrompt.value = !(await push.isCurrentlySubscribed())
+  showPushPrompt.value = true
+
 }
 
 async function enablePushNotifications() {
