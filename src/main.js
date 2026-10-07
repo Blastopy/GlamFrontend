@@ -26,3 +26,16 @@ app.mount('#app')
 if (localStorage.getItem('auth_token')) {
   initEcho()
 }
+
+// Register the push-notification service worker. Registering early (not
+// gated behind "is this a provider" — any role can land here) is harmless:
+// the worker just sits idle until something actually subscribes via
+// usePushNotifications().subscribe(). Silently no-ops on unsupported
+// browsers/HTTP origins rather than throwing.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.warn('Service worker registration failed:', err)
+    })
+  })
+}
