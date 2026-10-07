@@ -3,8 +3,8 @@ const year = new Date().getFullYear()
 
 // Update these with the business's real details/handles before launch.
 const contact = {
-  email: 'hello@salonbook.co.ke',
-  phone: '+254 700 000 000',
+  email: 'hello@mystyle.com',
+  phone: '+254 716 065 893',
 }
 
 const socials = [
@@ -30,6 +30,12 @@ const socials = [
         <h3 class="text-sm font-medium text-ink mb-2">Contact</h3>
         <a :href="`mailto:${contact.email}`" class="block text-sm text-ink-soft hover:text-clay-600">{{ contact.email }}</a>
         <a :href="`tel:${contact.phone.replace(/\s/g, '')}`" class="block text-sm text-ink-soft hover:text-clay-600 mt-1">{{ contact.phone }}</a>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-medium text-ink mb-2">Legal</h3>
+        <a :href="`mailto:${contact.email}`" class="block text-sm text-ink-soft hover:text-clay-600">Privacy Policy</a>
+        <a :href="`tel:${contact.phone.replace(/\s/g, '')}`" class="block text-sm text-ink-soft hover:text-clay-600 mt-1">Terms and Conditions</a>
       </div>
 
       <div>

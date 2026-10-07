@@ -11,8 +11,7 @@ export default defineConfig({
   },
   server: {
     allowedHosts: [
-     '.ngrok-free.app',
-     '.loca.lt'
+     'https://glam-frontend-lemon.vercel.app/',
                 ],
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
@@ -20,7 +19,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://glam-ceok.onrender.com/',
         changeOrigin: true,
       },
       // Fallback for uploaded photos if the backend's APP_URL ever ends up
@@ -28,7 +27,7 @@ export default defineConfig({
       // APP_URL is set correctly, but this proxy means a relative /storage/...
       // path still resolves instead of silently 404ing against the Vite server.
       '/storage': {
-        target: 'http://localhost:8000',
+        target: 'https://glam-ceok.onrender.com/',
         changeOrigin: true,
       },
     },

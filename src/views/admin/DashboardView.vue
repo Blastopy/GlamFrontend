@@ -6,32 +6,35 @@ import RevenueLineChart from '@/components/charts/RevenueLineChart.vue'
 import BookingsBarChart from '@/components/charts/BookingsBarChart.vue'
 import UserGrowthChart from '@/components/charts/UserGrowthChart.vue'
 import StatusDoughnutChart from '@/components/charts/StatusDoughnutChart.vue'
+import SubscriptionPaymentsBarChart from '@/components/charts/SubscriptionPaymentsBarChart.vue'
 
 const overview = ref(null)
 const revenue = ref({ labels: [], values: [] })
 const bookings = ref({ labels: [], series: {} })
 const growth = ref({ labels: [], clients: [], providers: [] })
+const subscriptionPayments = ref({ labels: [], series: {} })
 const topProviders = ref([])
 const rangeDays = ref(30)
 const loading = ref(true)
 const loadError = ref('')
 
-
 async function loadAll() {
   loading.value = true
   loadError.value = ''
   try {
-    const [ov, rev, book, grow, top] = await Promise.all([
+    const [ov, rev, book, grow, subPay, top] = await Promise.all([
       adminApi.overview(),
       adminApi.revenueSeries(rangeDays.value),
       adminApi.bookingsSeries(rangeDays.value),
       adminApi.userGrowthSeries(rangeDays.value),
+      adminApi.subscriptionPaymentsSeries(rangeDays.value),
       adminApi.topProviders(),
     ])
     overview.value = ov.data
     revenue.value = rev.data
     bookings.value = book.data
     growth.value = grow.data
+    subscriptionPayments.value = subPay.data
     topProviders.value = top.data
   } catch (e) {
     loadError.value = extractErrorMessage(e, 'Could not load analytics. Please try again.')
@@ -67,11 +70,11 @@ function fmtCurrency(n) {
 
     <template v-else-if="overview">
       <!-- Headline counters -->
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <div class="bg-white rounded-xl border border-ink/10 p-4">
-          <p class="text-xs text-ink-soft">Total revenue</p>
-          <p class="font-heading text-2xl text-ink mt-1">{{ fmtCurrency(overview.total_revenue) }}</p>
-          <p class="text-xs text-sage-600 mt-1">{{ fmtCurrency(overview.revenue_this_month) }} this month</p>
+          <p class="text-xs text-ink-soft">Subscription revenue</p>
+          <p class="font-heading text-2xl text-ink mt-1">{{ fmtCurrency(overview.subscription_revenue_total) }}</p>
+          <p class="text-xs text-sage-600 mt-1">{{ fmtCurrency(overview.subscription_revenue_this_month) }} this month</p>
         </div>
         <div class="bg-white rounded-xl border border-ink/10 p-4">
           <p class="text-xs text-ink-soft">Appointments</p>
@@ -86,13 +89,33 @@ function fmtCurrency(n) {
         <div class="bg-white rounded-xl border border-ink/10 p-4">
           <p class="text-xs text-ink-soft">Clients</p>
           <p class="font-heading text-2xl text-ink mt-1">{{ overview.clients }}</p>
-          <p class="text-xs text-ink-soft mt-1">{{ overview.pending_payments }} pending payments</p>
+          <p class="text-xs text-ink-soft mt-1">{{ overview.pending_subscription_payments }} pending payments</p>
+        </div>
+      </div>
+
+      <!-- Secondary counters — subscription health + platform features adoption -->
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-xl border border-ink/10 p-4">
+          <p class="text-xs text-ink-soft">Active subscriptions</p>
+          <p class="font-heading text-xl text-sage-600 mt-1">{{ overview.active_subscriptions }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-ink/10 p-4">
+          <p class="text-xs text-ink-soft">Expired / unpaid</p>
+          <p class="font-heading text-xl text-red-500 mt-1">{{ overview.expired_subscriptions }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-ink/10 p-4">
+          <p class="text-xs text-ink-soft">Featured providers</p>
+          <p class="font-heading text-xl text-amber-600 mt-1">{{ overview.featured_providers }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-ink/10 p-4">
+          <p class="text-xs text-ink-soft">Offer home visits</p>
+          <p class="font-heading text-xl text-clay-600 mt-1">{{ overview.home_service_providers }}</p>
         </div>
       </div>
 
       <div class="grid lg:grid-cols-3 gap-4 mb-8">
         <div class="lg:col-span-2 bg-white rounded-xl border border-ink/10 p-5">
-          <h2 class="font-heading text-base text-ink mb-3">Revenue</h2>
+          <h2 class="font-heading text-base text-ink mb-3">Subscription revenue</h2>
           <RevenueLineChart :labels="revenue.labels" :values="revenue.values" />
         </div>
         <div class="bg-white rounded-xl border border-ink/10 p-5">
@@ -110,6 +133,12 @@ function fmtCurrency(n) {
           <h2 class="font-heading text-base text-ink mb-3">Signups</h2>
           <UserGrowthChart :labels="growth.labels" :clients="growth.clients" :providers="growth.providers" />
         </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-ink/10 p-5 mb-8">
+        <h2 class="font-heading text-base text-ink mb-1">Subscription payment health</h2>
+        <p class="text-xs text-ink-soft mb-3">A spike in failed/pending usually points to a Daraja outage or misconfigured credentials, not a drop in interest.</p>
+        <SubscriptionPaymentsBarChart :labels="subscriptionPayments.labels" :series="subscriptionPayments.series" />
       </div>
 
       <div class="bg-white rounded-xl border border-ink/10 p-5">

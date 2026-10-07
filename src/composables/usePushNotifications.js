@@ -27,7 +27,8 @@ export function usePushNotifications() {
 
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true, // required by the spec — every push must show a visible notification
-        applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY),
+
+        applicationServerKey: urlBase64ToUint8Array('BNYIv9SA2Cjb3zu0SuCBrS5hQRM4h9DcLN42WPCA_B_rpk0sb0QdlcHiKXAN0167y4qxNu0a3l665lusHlHrvu0'),
       })
 
       await pushApi.subscribe(subscription.toJSON())

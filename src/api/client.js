@@ -3,8 +3,10 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { useLoadingStore } from '@/stores/loading'
 
 const api = axios.create({
-  baseURL: '/api/v1',
-  headers: { Accept: 'application/json' },
+  // baseURL: '/api/v1',
+  baseURL: 'https://glam-ceok.onrender.com/api/v1', 
+  headers: { Accept: 'application/json',
+   },
   timeout: 20000, // fail fast rather than hanging forever on a dead connection
 })
 

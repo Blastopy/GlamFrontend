@@ -9,7 +9,6 @@ const settings = ref(null)
 const loading = ref(true)
 const saving = ref(false)
 
-
 async function load() {
   loading.value = true
   try {
@@ -46,7 +45,7 @@ async function togglePayments() {
     <p v-if="loading" class="text-ink-soft text-sm">Loading…</p>
 
     <div v-else class="bg-white rounded-xl border border-ink/10 p-5">
-      <div class="flex justify-between items-start gap-4">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
           <h2 class="font-medium text-ink mb-1">M-Pesa payments</h2>
           <p class="text-sm text-ink-soft">

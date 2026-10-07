@@ -7,6 +7,9 @@ export default {
   revenueSeries(days = 30) {
     return api.get('/admin/analytics/revenue', { params: { days } })
   },
+  subscriptionPaymentsSeries(days = 30) {
+    return api.get('/admin/analytics/subscription-payments', { params: { days } })
+  },
   bookingsSeries(days = 30) {
     return api.get('/admin/analytics/bookings', { params: { days } })
   },

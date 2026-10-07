@@ -143,7 +143,7 @@ onMounted(load)
             Tap to add a photo
           </div>
           <input type="file" accept="image/*" class="hidden" @change="onImageChange" />
-          <span class="text-xs text-clay-600">{{ imagePreview ? 'Change photo' : 'Choose photo' }}</span>
+          <span class="text-xs text-clay-600">{{ imagePreview ? 'Change photo' : 'Choose photo not more than 4MB' }}</span>
         </label>
 
         <label class="block text-sm mb-1 text-ink-soft">Name</label>
