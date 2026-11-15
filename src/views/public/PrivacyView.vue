@@ -1,0 +1,162 @@
+<script setup>
+import LegalDocument from '@/components/shared/LegalDocument.vue'
+
+const email = 'info@flairplace.com'
+
+const sections = [
+  {
+    id: 'who-we-are',
+    title: 'Who we are',
+    blocks: [
+      { p: 'Flairplace ("Flairplace", "we", "us") runs an online marketplace that connects clients with independent beauty professionals such as barbers, salons and nail specialists in Kenya. This Privacy Policy explains what personal data we collect when you use our website and services, why we collect it, and the choices you have.' },
+      { p: 'We handle personal data in line with the Kenya Data Protection Act, 2019 and its regulations. For the purposes of that Act, Flairplace is the data controller for the personal data described in this policy.' },
+    ],
+  },
+  {
+    id: 'information-we-collect',
+    title: 'Information we collect',
+    blocks: [
+      { p: 'We only collect what we need to run the service. Depending on how you use Flairplace, this may include:' },
+      {
+        list: [
+          'Account details — your name, email address, phone number, password (stored in encrypted form) and whether you joined as a client or a provider.',
+          'Sign-in with Google — if you choose this option, we receive your name, email address and profile identifier from Google. We do not receive your Google password.',
+          'Provider profile details — business name, business type, bio, address, map location, services, prices, durations and photos you upload.',
+          'Booking details — the style booked, date and time, notes you add for the provider, booking status and, for home visits, the address you enter and (only if you choose to share it) your device’s exact location.',
+          'Messages — the content of messages you send to other users through Flairplace.',
+          'Reviews — the ratings and comments you leave after a completed appointment.',
+          'Payment details — for M-Pesa payments (such as provider subscriptions or booking deposits) we collect the phone number used to pay, the amount and the transaction reference and status. We do not see or store your M-Pesa PIN.',
+          'Location for nearby search — if you allow it, your browser shares your approximate location so we can show providers near you.',
+          'Technical information — basic device, browser and log data that helps us keep the service secure and working properly.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'how-we-use',
+    title: 'How we use your information',
+    blocks: [
+      {
+        list: [
+          'To create and manage your account and let you sign in.',
+          'To show provider profiles, services and prices to people browsing Flairplace.',
+          'To process bookings, send booking updates and let providers confirm, start and complete appointments.',
+          'To give providers directions to home-visit addresses you choose to share.',
+          'To deliver messages between clients and providers, including real-time notifications.',
+          'To process M-Pesa payments and confirm when they succeed or fail.',
+          'To show ratings and reviews that help other clients choose a provider.',
+          'To keep the platform safe — detecting fraud, abuse and violations of our Terms & Conditions.',
+          'To respond to your questions and support requests.',
+          'To meet our legal and regulatory obligations.',
+        ],
+      },
+      { p: 'We rely on the following legal bases: performing our contract with you (providing the service you signed up for), your consent (for example, sharing your location), our legitimate interests in running and improving a safe marketplace, and compliance with the law.' },
+    ],
+  },
+  {
+    id: 'what-others-see',
+    title: 'What other users can see',
+    blocks: [
+      { p: 'Flairplace is a marketplace, so some information is visible to other users by design:' },
+      {
+        list: [
+          'Provider profiles — business name, type, bio, address, map location, services, prices, photos, open/closed status, phone number and reviews are public.',
+          'When you book — the provider sees your name, phone number, the booking details, any notes you add and, for home visits, the address and any location you share.',
+          'Reviews — your name, rating and comment appear on the provider’s profile.',
+          'Messages — are visible to you and the person you are messaging.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'sharing',
+    title: 'Sharing with third parties',
+    blocks: [
+      { p: 'We do not sell your personal data. We share it only where needed to run the service, with trusted providers who process it on our behalf, including:' },
+      {
+        list: [
+          'Payment processing — Safaricom M-Pesa, to process mobile money payments.',
+          'Sign-in — Google, if you choose to sign in with your Google account.',
+          'Real-time messaging and notifications — a hosted service that delivers live updates to your browser.',
+          'Maps — OpenStreetMap, which provides the map tiles shown on provider pages.',
+          'Hosting and storage — the infrastructure providers that host our servers, database and uploaded photos.',
+        ],
+      },
+      { p: 'We may also disclose information if required by law, court order or a lawful request from a public authority, or to protect the rights, safety and property of Flairplace, our users or the public.' },
+    ],
+  },
+  {
+    id: 'retention',
+    title: 'How long we keep data',
+    blocks: [
+      { p: 'We keep personal data only for as long as needed for the purposes above. Account and profile data is kept while your account is active. Booking, payment and transaction records may be kept for longer where the law requires us to keep financial records. When data is no longer needed, we delete or anonymise it.' },
+    ],
+  },
+  {
+    id: 'security',
+    title: 'How we protect your data',
+    blocks: [
+      { p: 'We use reasonable technical and organisational measures to protect your personal data, including encrypted connections (HTTPS), hashed passwords and access controls that limit who can see your information. No system is completely secure, so please use a strong, unique password and let us know straight away if you think your account has been compromised.' },
+    ],
+  },
+  {
+    id: 'your-rights',
+    title: 'Your rights',
+    blocks: [
+      { p: 'Under the Kenya Data Protection Act, 2019 you have the right to:' },
+      {
+        list: [
+          'Be informed of how your personal data is used.',
+          'Access the personal data we hold about you.',
+          'Ask us to correct inaccurate or incomplete data.',
+          'Ask us to delete your data, where there is no lawful reason for us to keep it.',
+          'Object to or restrict certain processing of your data.',
+          'Withdraw your consent at any time — for example, by turning off location access in your browser.',
+          'Request a copy of your data in a portable format, where applicable.',
+        ],
+      },
+      { p: `To exercise any of these rights, email us at ${email}. We may need to verify your identity before acting on a request. If you are not satisfied with our response, you can complain to the Office of the Data Protection Commissioner (ODPC) in Kenya.` },
+    ],
+  },
+  {
+    id: 'cookies',
+    title: 'Cookies and local storage',
+    blocks: [
+      { p: 'We use cookies and similar browser storage that are necessary to keep you signed in, remember your preferences and keep the service secure. We do not use advertising cookies. You can clear or block cookies in your browser settings, but parts of Flairplace may not work properly without them.' },
+    ],
+  },
+  {
+    id: 'children',
+    title: 'Children',
+    blocks: [
+      { p: 'Flairplace is intended for people aged 18 and over. We do not knowingly collect personal data from children. If you believe a child has given us their data, please contact us and we will delete it.' },
+    ],
+  },
+  {
+    id: 'changes',
+    title: 'Changes to this policy',
+    blocks: [
+      { p: 'We may update this Privacy Policy from time to time. When we do, we will change the "Last updated" date at the top of this page and, for significant changes, let you know through the service or by email.' },
+    ],
+  },
+  {
+    id: 'contact',
+    title: 'Contact us',
+    blocks: [
+      { p: `If you have any questions about this Privacy Policy or how we handle your data, email us at ${email} or use our contact page.` },
+    ],
+  },
+]
+</script>
+
+<template>
+  <LegalDocument
+    eyebrow="Legal"
+    title="Privacy"
+    accent="policy"
+    intro="How Flairplace collects, uses and protects your personal information when you browse, book or offer services on our platform."
+    updated="14 November 2026"
+    :sections="sections"
+    :related="{ to: '/terms', label: 'Read our Terms & Conditions' }"
+  />
+</template>

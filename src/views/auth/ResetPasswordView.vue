@@ -1,4 +1,5 @@
 <script setup>
+import PasswordInput from '@/components/shared/PasswordInput.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import authApi from '@/api/auth'
@@ -41,9 +42,9 @@ async function submit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4">
+  <div class="flex min-h-[calc(100dvh-14rem)] items-center justify-center px-1 py-6 sm:py-10">
     <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-      <img src="/logo.jpg" alt="SalonBook" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
+      <img src="/logo.png" alt="Flairplace" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
 
       <template v-if="linkInvalid">
         <h1 class="text-xl font-semibold mb-2 text-center">Invalid reset link</h1>
@@ -58,12 +59,12 @@ async function submit() {
         <p class="text-sm text-gray-500 text-center mb-6">Resetting for {{ form.email }}</p>
 
         <label class="block text-sm mb-1 text-gray-600">New password</label>
-        <input v-model="form.password" type="password" required minlength="8"
-          class="w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-clay-500" />
+        <PasswordInput v-model="form.password" required minlength="8" autocomplete="new-password" wrapper-class="mb-4"
+          class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-clay-500" />
 
         <label class="block text-sm mb-1 text-gray-600">Confirm new password</label>
-        <input v-model="form.password_confirmation" type="password" required minlength="8"
-          class="w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-clay-500" />
+        <PasswordInput v-model="form.password_confirmation" required minlength="8" autocomplete="new-password" wrapper-class="mb-4"
+          class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-clay-500" />
 
         <p v-if="error" class="text-red-600 text-sm mb-4">{{ error }}</p>
 

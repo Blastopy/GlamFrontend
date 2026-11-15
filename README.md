@@ -1,4 +1,4 @@
-# SalonBook — Vue 3 Frontend
+# Flairplace — Vue 3 Frontend
 
 Talks to the Laravel API scaffolded earlier (`salonapp-scaffold.zip`).
 
@@ -84,8 +84,8 @@ Past-time booking is blocked both ways: the datetime picker in `ProviderProfileV
 - `views/admin/AppointmentsView.vue` — platform-wide booking oversight with a force-cancel override for disputes
 
 ## Branding
-- `public/logo.jpg` is the app logo — shown in the nav bar, the login/register screens, and set as the favicon in `index.html`. Replace this file directly to rebrand; nothing else needs to change since every reference points at the static `/logo.jpg` path.
-- The same graceful-fallback pattern used for style photos (see below) means a missing or renamed logo file would just show a broken image in those three spots — if you replace it, keep the filename or update the three references (`NavBar.vue`, `LoginView.vue`, `RegisterView.vue`, `index.html`).
+- `public/logo.png` is the app logo — shown in the nav bar, the login/register screens, and set as the favicon in `index.html`. Replace this file directly to rebrand; nothing else needs to change since every reference points at the static `/logo.png` path.
+- The same graceful-fallback pattern used for style photos (see below) means a missing or renamed logo file would just show a broken image — if you replace it, keep the filename or update its references in the source.
 
 ## Image loading — graceful fallback
 Every place a style photo renders (`ProviderCard`, `CatalogueView`, `ProviderProfileView`, the `DiscoverView` hero/trending strip) tracks failed image loads via an `@error` handler and falls back to a placeholder tile instead of a broken image icon. This covers the common causes of "the photo doesn't show": a missing `php artisan storage:link`, an `APP_URL` that isn't fully-qualified, or a file that's since been deleted. If photos aren't appearing at all (not even the fallback flickering in), check those three things on the backend first — the frontend fallback hides the symptom but doesn't fix a genuinely misconfigured storage setup.

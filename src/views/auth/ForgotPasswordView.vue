@@ -25,9 +25,9 @@ async function submit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4">
+  <div class="flex min-h-[calc(100dvh-14rem)] items-center justify-center px-1 py-6 sm:py-10">
     <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-      <img src="/logo.jpg" alt="SalonBook" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
+      <img src="/logo.png" alt="Flairplace" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
 
       <template v-if="sent">
         <h1 class="text-xl font-semibold mb-2 text-center">Check your email</h1>

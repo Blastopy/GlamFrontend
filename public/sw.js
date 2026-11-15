@@ -12,11 +12,11 @@ self.addEventListener('push', (event) => {
     return // malformed payload — nothing sensible to show
   }
 
-  const title = payload.title || 'SalonBook'
+  const title = payload.title || 'Flairplace'
   const options = {
     body: payload.body || '',
-    icon: payload.icon || '/logo.jpg',
-    badge: '/logo.jpg',
+    icon: payload.icon || '/logo.png',
+    badge: '/logo.png',
     data: payload.data || {},
     actions: payload.actions || [], // [{ action: 'accept', title: 'Accept' }, ...] — set by NewAppointmentBookedPush
     requireInteraction: true, // a booking request shouldn't auto-dismiss before they've seen it

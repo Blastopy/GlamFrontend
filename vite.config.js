@@ -12,6 +12,9 @@ export default defineConfig({
   server: {
     allowedHosts: [
      'https://glam-frontend-lemon.vercel.app/',
+     '.ngrok-free.app',
+     '.ngrok.app',
+     'antitoxic-uncooked-upon.ngrok-free.dev'
                 ],
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
@@ -19,7 +22,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://glam-ceok.onrender.com/',
+        target: 'https://api.flairplace.com/',
         changeOrigin: true,
       },
       // Fallback for uploaded photos if the backend's APP_URL ever ends up
@@ -27,7 +30,7 @@ export default defineConfig({
       // APP_URL is set correctly, but this proxy means a relative /storage/...
       // path still resolves instead of silently 404ing against the Vite server.
       '/storage': {
-        target: 'https://glam-ceok.onrender.com/',
+        target: 'https://api.flairplace.com/',
         changeOrigin: true,
       },
     },

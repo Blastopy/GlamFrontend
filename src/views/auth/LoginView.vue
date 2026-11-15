@@ -1,4 +1,5 @@
 <script setup>
+import PasswordInput from '@/components/shared/PasswordInput.vue'
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -46,9 +47,13 @@ async function handleGoogle(credential) {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4">
+  <div class="flex min-h-[calc(100dvh-14rem)] items-center justify-center px-1 py-6 sm:py-10">
     <form @submit.prevent="submit" class="w-full max-w-sm bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-      <img src="/logo.jpg" alt="SalonBook" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
+      <RouterLink to="/" class="inline-flex items-center gap-2 mb-5 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:text-clay-600 hover:border-clay-300">
+        <span aria-hidden="true">&larr;</span>
+        Back to home
+      </RouterLink>
+      <img src="/logo.png" alt="Flairplace" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
       <h1 class="text-xl font-semibold mb-6 text-center">Welcome back</h1>
 
       <label class="block text-sm mb-1 text-gray-600">Email</label>
@@ -59,8 +64,8 @@ async function handleGoogle(credential) {
         <label class="block text-sm text-gray-600">Password</label>
         <RouterLink to="/forgot-password" class="text-xs text-clay-600">Forgot password?</RouterLink>
       </div>
-      <input v-model="form.password" type="password" required
-        class="w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-clay-500" />
+      <PasswordInput v-model="form.password" required autocomplete="current-password" wrapper-class="mb-4"
+        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-clay-500" />
 
       <p v-if="error" class="text-red-600 text-sm mb-4">{{ error }}</p>
 

@@ -17,8 +17,9 @@ const chartData = computed(() => ({
     {
       label: 'New clients',
       data: props.values,
-      borderColor: '#7C9473',
-      backgroundColor: 'rgba(124, 148, 115, 0.08)',
+      borderColor: '#e35513',
+      backgroundColor: 'rgba(227, 85, 19, 0.08)',
+      pointBackgroundColor: '#e35513',
       tension: 0.35,
       fill: true,
       pointRadius: 0,

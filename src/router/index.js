@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useLoadingStore } from '@/stores/loading'
 
 const routes = [
   { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue'), meta: { guestOnly: true } },
@@ -12,6 +13,31 @@ const routes = [
     path: '/',
     name: 'discover',
     component: () => import('@/views/client/DiscoverView.vue'),
+  },
+  {
+    path: '/providers',
+    name: 'providers-directory',
+    component: () => import('@/views/public/ProvidersView.vue'),
+  },
+  {
+    path: '/about',
+    name: 'about',
+    component: () => import('@/views/public/AboutView.vue'),
+  },
+  {
+    path: '/contact',
+    name: 'contact',
+    component: () => import('@/views/public/ContactView.vue'),
+  },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('@/views/public/PrivacyView.vue'),
+  },
+  {
+    path: '/terms',
+    name: 'terms',
+    component: () => import('@/views/public/TermsView.vue'),
   },
   {
     path: '/providers/:id',
@@ -139,5 +165,13 @@ router.beforeEach((to) => {
 
   return true
 })
+
+// Page-switch spinner: flag the navigation as in progress until the next page
+// (including its lazy-loaded chunk) has resolved, failed, or been cancelled.
+router.beforeEach((to, from) => {
+  if (to.path !== from.path) useLoadingStore().startNavigation()
+})
+router.afterEach(() => useLoadingStore().stopNavigation())
+router.onError(() => useLoadingStore().stopNavigation())
 
 export default router

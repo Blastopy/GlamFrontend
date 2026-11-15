@@ -1,0 +1,166 @@
+<script setup>
+import LegalDocument from '@/components/shared/LegalDocument.vue'
+
+const email = 'info@flairplace.com'
+
+const sections = [
+  {
+    id: 'acceptance',
+    title: 'Acceptance of these terms',
+    blocks: [
+      { p: 'These Terms & Conditions ("Terms") govern your use of the Flairplace website and services. By creating an account, booking an appointment or listing your services on Flairplace, you agree to these Terms and to our Privacy Policy. If you do not agree, please do not use Flairplace.' },
+    ],
+  },
+  {
+    id: 'about-flairplace',
+    title: 'What Flairplace does',
+    blocks: [
+      { p: 'Flairplace is an online marketplace that helps clients discover, message and book independent beauty professionals ("providers") such as barbers, salons and nail specialists.' },
+      { note: 'Flairplace is not a party to the service agreement between a client and a provider. Providers are independent businesses — they are not our employees or agents, and they are solely responsible for the services they offer and deliver.' },
+    ],
+  },
+  {
+    id: 'accounts',
+    title: 'Your account',
+    blocks: [
+      {
+        list: [
+          'You must be at least 18 years old to create an account.',
+          'The information you give us must be accurate and kept up to date.',
+          'You are responsible for keeping your password secure and for all activity under your account.',
+          'One person or business may not create multiple accounts to get around a suspension or these Terms.',
+          'Tell us immediately if you think someone else has accessed your account.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'bookings',
+    title: 'Bookings',
+    blocks: [
+      {
+        list: [
+          'A booking request is sent to the provider, who may confirm or decline it. A booking is only confirmed once the provider confirms it.',
+          'Prices shown on Flairplace are set by providers. Unless stated otherwise, you pay the provider directly for the service.',
+          'If you book a home visit, the provider’s home-visit fee (if any) is added to the service price, and you must give an accurate address.',
+          'Please arrive on time, or let the provider know through the "I’m on my way" button or a message if you are running late.',
+          'Some providers may ask for a deposit paid via M-Pesa to secure a booking. The deposit amount and conditions are shown before you pay.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'cancellations',
+    title: 'Cancellations and no-shows',
+    blocks: [
+      { p: 'You can cancel a pending or confirmed booking from My appointments. Please cancel as early as possible so the provider can offer the slot to someone else.' },
+      { p: 'Providers may cancel a booking if they are unable to deliver the service, and should let you know as early as possible. Providers may mark a booking as a "no show" if you do not arrive. Repeated late cancellations or no-shows may lead to restrictions on your account.' },
+      { p: 'Whether a deposit is refunded after a cancellation depends on the provider’s policy and the circumstances. Contact the provider first; if you cannot resolve the issue, contact us and we will try to help.' },
+    ],
+  },
+  {
+    id: 'providers',
+    title: 'Terms for providers',
+    blocks: [
+      { p: 'If you list your business on Flairplace, you also agree that:' },
+      {
+        list: [
+          'All details on your profile — business name, address, services, prices, durations and photos — are accurate, and photos show your own work or work you have the right to use.',
+          'You hold any licences, permits and qualifications required to offer your services, and you comply with applicable health, safety and hygiene rules.',
+          'You will honour confirmed bookings and the prices displayed at the time of booking.',
+          'You will keep your open/closed status up to date and respond to booking requests and messages promptly.',
+          'You will use client information (such as names, phone numbers and home addresses) only to deliver the booked service, and in line with the Kenya Data Protection Act, 2019.',
+          'You are responsible for your own taxes and any business registrations.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'subscriptions',
+    title: 'Provider subscriptions and payments',
+    blocks: [
+      { p: 'To be listed and visible to clients, providers may need an active Flairplace subscription. The current fee and subscription period are shown on the activation page before you pay.' },
+      {
+        list: [
+          'Subscription fees are paid via M-Pesa. You are responsible for any charges your mobile network applies.',
+          'If your subscription expires, your profile may be hidden from clients until you renew.',
+          'Subscription fees are non-refundable except where required by law or where we have charged you in error.',
+          'We may change subscription fees in future. Any change will apply from your next renewal, and we will show the new fee before you pay.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'conduct',
+    title: 'Acceptable use',
+    blocks: [
+      { p: 'When using Flairplace, you must not:' },
+      {
+        list: [
+          'Post false, misleading, offensive or illegal content, including fake reviews.',
+          'Harass, threaten, discriminate against or abuse other users.',
+          'Use messages to send spam or to arrange to avoid legitimate fees.',
+          'Upload content you do not have the right to share.',
+          'Try to access other users’ accounts, interfere with the platform or scrape data from it.',
+          'Use Flairplace for any unlawful purpose.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'reviews',
+    title: 'Reviews and content',
+    blocks: [
+      { p: 'Reviews must be honest and based on a real, completed appointment. You keep ownership of the content you upload (such as photos, bios and reviews), but you give Flairplace a non-exclusive, royalty-free licence to display and use it to operate and promote the service. We may remove content that breaks these Terms.' },
+    ],
+  },
+  {
+    id: 'liability',
+    title: 'Disclaimers and liability',
+    blocks: [
+      { p: 'Flairplace is provided "as is". We work hard to keep it available and accurate, but we do not guarantee that it will always be uninterrupted or error-free.' },
+      { p: 'Because providers are independent, Flairplace is not responsible for the quality, safety or outcome of any service a provider delivers, or for any dispute between a client and a provider. To the fullest extent permitted by law, Flairplace is not liable for indirect or consequential losses arising from your use of the platform. Nothing in these Terms limits any rights you have under Kenyan consumer protection law that cannot be excluded.' },
+    ],
+  },
+  {
+    id: 'termination',
+    title: 'Suspension and termination',
+    blocks: [
+      { p: 'You may stop using Flairplace at any time. We may suspend or close an account, or remove a listing, if a user breaks these Terms, puts other users at risk, or where we are required to by law. Where reasonable, we will tell you why.' },
+    ],
+  },
+  {
+    id: 'changes',
+    title: 'Changes to these terms',
+    blocks: [
+      { p: 'We may update these Terms from time to time. When we do, we will change the "Last updated" date at the top of this page and, for significant changes, notify you through the service or by email. Continuing to use Flairplace after changes take effect means you accept the updated Terms.' },
+    ],
+  },
+  {
+    id: 'law',
+    title: 'Governing law',
+    blocks: [
+      { p: 'These Terms are governed by the laws of Kenya. Any dispute that cannot be resolved informally will be subject to the jurisdiction of the courts of Kenya.' },
+    ],
+  },
+  {
+    id: 'contact',
+    title: 'Contact us',
+    blocks: [
+      { p: `If you have questions about these Terms, email us at ${email} or use our contact page.` },
+    ],
+  },
+]
+</script>
+
+<template>
+  <LegalDocument
+    eyebrow="Legal"
+    title="Terms &"
+    accent="conditions"
+    intro="The rules for using Flairplace — for clients booking appointments and for professionals offering their services."
+    updated="14 November 2026"
+    :sections="sections"
+    :related="{ to: '/privacy', label: 'Read our Privacy Policy' }"
+  />
+</template>

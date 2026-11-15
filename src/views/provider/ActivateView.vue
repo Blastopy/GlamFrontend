@@ -352,8 +352,8 @@ function formatDate(d) {
   <div class="min-h-[70vh] flex items-center justify-center px-4">
     <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-sm border border-gray-100">
       <img
-        src="/logo.jpg"
-        alt="SalonBook"
+        src="/logo.png"
+        alt="Flairplace"
         class="w-14 h-14 rounded-full object-cover mx-auto mb-4"
       />
 

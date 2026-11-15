@@ -25,7 +25,7 @@ export function initEcho() {
     wssPort: 443,
     forceTLS: true,
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: 'https://glam-ceok.onrender.com/broadcasting/auth',
+    authEndpoint: `${import.meta.env.VITE_API_URL}/broadcasting/auth`,
     auth: {
       headers: {
         Authorization: `Bearer ${token}`,

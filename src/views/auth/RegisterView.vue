@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { extractErrorMessage, extractFieldErrors } from '@/utils/errors'
 import GoogleSignInButton from '@/components/shared/GoogleSignInButton.vue'
+import PasswordInput from '@/components/shared/PasswordInput.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -15,6 +16,15 @@ const form = ref({
 })
 const error = ref('')
 const fieldErrors = ref({})
+const agreed = ref(false)
+const agreeError = ref('')
+
+const AGREE_MESSAGE = 'Please agree to the Terms & Conditions and Privacy Policy to create an account.'
+
+function checkAgreement() {
+  agreeError.value = agreed.value ? '' : AGREE_MESSAGE
+  return agreed.value
+}
 
 function redirectAfterRegister(role) {
   if (role === 'provider') {
@@ -37,6 +47,7 @@ function redirectAfterRegister(role) {
 async function submit() {
   error.value = ''
   fieldErrors.value = {}
+  if (!checkAgreement()) return
   try {
     const { user } = await auth.register(form.value)
     redirectAfterRegister(user.role)
@@ -48,6 +59,7 @@ async function submit() {
 
 async function handleGoogle(credential) {
   error.value = ''
+  if (!checkAgreement()) return
   try {
     const { user } = await auth.loginWithGoogle(credential)
     redirectAfterRegister(user.role)
@@ -58,9 +70,9 @@ async function handleGoogle(credential) {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 py-10">
+  <div class="flex min-h-[calc(100dvh-14rem)] items-center justify-center px-1 py-6 sm:py-10">
     <form @submit.prevent="submit" class="w-full max-w-sm bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-      <img src="/logo.jpg" alt="SalonBook" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
+          <img src="/logo.png" alt="Flairplace" class="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
       <h1 class="text-xl font-semibold mb-6 text-center">Create your account</h1>
 
       <div class="grid grid-cols-2 gap-2 mb-4">
@@ -101,10 +113,33 @@ async function handleGoogle(credential) {
       </template>
 
       <label class="block text-sm mb-1 text-gray-600">Password</label>
-      <input v-model="form.password" type="password" required class="w-full mb-3 px-3 py-2 border rounded-lg" />
+      <PasswordInput v-model="form.password" required autocomplete="new-password" wrapper-class="mb-3" class="w-full px-3 py-2 border rounded-lg" />
 
       <label class="block text-sm mb-1 text-gray-600">Confirm password</label>
-      <input v-model="form.password_confirmation" type="password" required class="w-full mb-4 px-3 py-2 border rounded-lg" />
+      <PasswordInput v-model="form.password_confirmation" required autocomplete="new-password" wrapper-class="mb-4" class="w-full px-3 py-2 border rounded-lg" />
+
+      <label
+        :class="[
+          'mb-4 flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition',
+          agreeError ? 'border-red-300 bg-red-50/60' : agreed ? 'border-clay-200 bg-clay-50/60' : 'border-ink/10 hover:border-clay-300',
+        ]"
+      >
+        <input
+          v-model="agreed"
+          type="checkbox"
+          required
+          aria-describedby="agree-error"
+          class="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded accent-clay-600"
+          @change="agreed && (agreeError = '')"
+        />
+        <span class="text-xs leading-5 text-ink-soft">
+          I agree to Flairplace’s
+          <RouterLink to="/terms" target="_blank" class="font-semibold text-clay-600 underline-offset-2 hover:text-clay-700 hover:underline">Terms &amp; Conditions</RouterLink>
+          and
+          <RouterLink to="/privacy" target="_blank" class="font-semibold text-clay-600 underline-offset-2 hover:text-clay-700 hover:underline">Privacy Policy</RouterLink>.
+        </span>
+      </label>
+      <p v-if="agreeError" id="agree-error" class="-mt-2 mb-4 text-xs text-red-600">{{ agreeError }}</p>
 
       <p v-if="error" class="text-red-600 text-sm mb-4">{{ error }}</p>
 

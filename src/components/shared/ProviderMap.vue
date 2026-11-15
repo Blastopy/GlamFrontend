@@ -32,7 +32,7 @@ function pinIcon(color) {
   })
 }
 
-const providerIcon = pinIcon('#B54B2C') // clay-600
+const providerIcon = pinIcon('#e35513') // clay-600
 const youIcon = pinIcon('#7C9473') // sage-500
 
 function renderMarkers() {
