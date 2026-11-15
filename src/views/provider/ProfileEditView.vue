@@ -46,6 +46,7 @@ const TYPES = [
 ]
 
 onMounted(async () => {
+  form.value.business_hours = { ...DEFAULT_HOURS }
   const profile = auth.user.providerProfile || auth.user.provider_profile
   if (profile) {
     form.value = { ...form.value, ...profile, business_hours: { ...DEFAULT_HOURS, ...(profile.business_hours || {}) } }
@@ -266,7 +267,7 @@ const inputClass = 'w-full rounded-xl border border-ink/10 bg-paper/40 px-4 py-3
             <div class="overflow-hidden rounded-2xl border border-ink/10">
               <div ref="mapElement" class="h-80 w-full" role="application" aria-label="Select your business location on the map"></div>
               <p class="border-t border-ink/10 bg-paper/50 px-4 py-3 text-xs text-ink-soft">
-                Click anywhere on the map to place your business pin. You can drag the map to find the right location.
+                Click anywhere on the map to place your business pin. Pan the map and click to select the right location.
               </p>
             </div>
             <p v-if="hasCoordinates" class="text-xs text-ink-soft">
