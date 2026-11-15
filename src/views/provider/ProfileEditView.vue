@@ -1,5 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 import { extractErrorMessage } from '@/utils/errors'
@@ -10,7 +12,7 @@ const notifications = useNotificationsStore()
 const form = ref({
   business_name: '', provider_type: 'barber', bio: '', address: '',
   latitude: null, longitude: null,
-  offers_home_service: false, home_service_fee: '',
+  offers_home_service: false, home_service_fee: '', business_hours: {},
 })
 const closedReason = ref('')
 const saving = ref(false)
@@ -19,6 +21,22 @@ const saveError = ref('')
 const togglingOpen = ref(false)
 const isOpen = ref(null) // current open/closed state as last known; null = unknown
 const locating = ref(false)
+const mapElement = ref(null)
+let mapInstance = null
+let mapMarker = null
+
+const DAYS = [
+  { key: 'monday', label: 'Monday' },
+  { key: 'tuesday', label: 'Tuesday' },
+  { key: 'wednesday', label: 'Wednesday' },
+  { key: 'thursday', label: 'Thursday' },
+  { key: 'friday', label: 'Friday' },
+  { key: 'saturday', label: 'Saturday' },
+  { key: 'sunday', label: 'Sunday' },
+]
+const DEFAULT_HOURS = Object.fromEntries(DAYS.map(({ key }) => [
+  key, { open: '09:00', close: '18:00', closed: false },
+]))
 
 const TYPES = [
   { value: 'barber', label: 'Barber' },
@@ -30,16 +48,55 @@ const TYPES = [
 onMounted(async () => {
   const profile = auth.user.providerProfile || auth.user.provider_profile
   if (profile) {
-    form.value = { ...form.value, ...profile }
+    form.value = { ...form.value, ...profile, business_hours: { ...DEFAULT_HOURS, ...(profile.business_hours || {}) } }
     if (typeof profile.is_open === 'boolean') isOpen.value = profile.is_open
     if (profile.closed_reason) closedReason.value = profile.closed_reason
   }
+  await nextTick()
+  initializeMap()
 })
+
+onBeforeUnmount(() => {
+  if (mapInstance) mapInstance.remove()
+})
+
+function initializeMap() {
+  if (!mapElement.value || mapInstance) return
+  const lat = hasCoordinates.value ? Number(form.value.latitude) : -1.286389
+  const lng = hasCoordinates.value ? Number(form.value.longitude) : 36.817223
+  mapInstance = L.map(mapElement.value).setView([lat, lng], hasCoordinates.value ? 15 : 11)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors',
+  }).addTo(mapInstance)
+  mapInstance.on('click', (event) => setMapLocation(event.latlng.lat, event.latlng.lng))
+  if (hasCoordinates.value) setMapLocation(lat, lng, 15)
+  setTimeout(() => mapInstance?.invalidateSize(), 100)
+}
+
+function setMapLocation(lat, lng, zoom = 16) {
+  form.value.latitude = Number(lat.toFixed(7))
+  form.value.longitude = Number(lng.toFixed(7))
+  if (!mapInstance) return
+  if (mapMarker) mapMarker.remove()
+  mapMarker = L.circleMarker([lat, lng], {
+    radius: 9, color: '#ffffff', weight: 3, fillColor: '#b86d50', fillOpacity: 1,
+  }).addTo(mapInstance)
+  mapInstance.setView([lat, lng], zoom)
+}
 
 async function save() {
   saving.value = true
   savedMsg.value = ''
   saveError.value = ''
+  for (const day of DAYS) {
+    const hours = form.value.business_hours?.[day.key]
+    if (hours && !hours.closed && hours.open >= hours.close) {
+      saveError.value = `Closing time must be later than opening time on ${day.label}.`
+      saving.value = false
+      return
+    }
+  }
   try {
     await providersApi.updateProfile(form.value)
     savedMsg.value = 'Profile updated.'
@@ -54,8 +111,7 @@ async function useCurrentLocation() {
   locating.value = true
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      form.value.latitude = pos.coords.latitude
-      form.value.longitude = pos.coords.longitude
+      setMapLocation(pos.coords.latitude, pos.coords.longitude)
       locating.value = false
     },
     () => {
@@ -207,12 +263,48 @@ const inputClass = 'w-full rounded-xl border border-ink/10 bg-paper/40 px-4 py-3
                 {{ locating ? 'Finding you…' : hasCoordinates ? 'Update location' : 'Use my current location' }}
               </button>
             </div>
+            <div class="overflow-hidden rounded-2xl border border-ink/10">
+              <div ref="mapElement" class="h-80 w-full" role="application" aria-label="Select your business location on the map"></div>
+              <p class="border-t border-ink/10 bg-paper/50 px-4 py-3 text-xs text-ink-soft">
+                Click anywhere on the map to place your business pin. You can drag the map to find the right location.
+              </p>
+            </div>
+            <p v-if="hasCoordinates" class="text-xs text-ink-soft">
+              Selected coordinates: {{ Number(form.latitude).toFixed(5) }}, {{ Number(form.longitude).toFixed(5) }}
+            </p>
+          </div>
+        </section>
+
+        <!-- Business hours -->
+        <section aria-labelledby="hours-title" class="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm shadow-ink/5 sm:p-8">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-clay-600">Step 3</p>
+          <h2 id="hours-title" class="mt-1 font-heading text-xl font-semibold text-ink">Opening hours</h2>
+          <p class="mt-2 text-sm text-ink-soft">Set the hours clients should see when they view your business. Mark a day as closed if you do not operate.</p>
+          <div class="mt-5 divide-y divide-ink/10">
+            <div v-for="day in DAYS" :key="day.key" class="grid gap-3 py-4 sm:grid-cols-[7rem_1fr_auto] sm:items-center">
+              <span class="text-sm font-semibold text-ink">{{ day.label }}</span>
+              <div v-if="!form.business_hours[day.key]?.closed" class="grid grid-cols-2 gap-2">
+                <label class="block">
+                  <span class="mb-1 block text-xs text-ink-soft">Opens</span>
+                  <input v-model="form.business_hours[day.key].open" type="time" :class="inputClass" />
+                </label>
+                <label class="block">
+                  <span class="mb-1 block text-xs text-ink-soft">Closes</span>
+                  <input v-model="form.business_hours[day.key].close" type="time" :class="inputClass" />
+                </label>
+              </div>
+              <span v-else class="text-sm text-ink-soft sm:col-span-1">Closed all day</span>
+              <label class="flex items-center gap-2 text-sm text-ink-soft">
+                <input v-model="form.business_hours[day.key].closed" type="checkbox" class="h-4 w-4 rounded accent-clay-600" />
+                Closed
+              </label>
+            </div>
           </div>
         </section>
 
         <!-- Home service -->
         <section aria-labelledby="home-title" class="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm shadow-ink/5 sm:p-8">
-          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-clay-600">Step 3</p>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-clay-600">Step 4</p>
           <h2 id="home-title" class="mt-1 font-heading text-xl font-semibold text-ink">Home visits</h2>
 
           <label class="mt-6 flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 p-4 transition hover:border-clay-300">
