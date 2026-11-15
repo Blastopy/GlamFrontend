@@ -29,6 +29,10 @@ async function submit() {
   error.value = ''
   try {
     const { user } = await auth.login(form.value)
+    if (!user.email_verified_at) {
+      router.push({ name: 'verify-email', query: { email: user.email || form.value.email } })
+      return
+    }
     redirectAfterLogin(user.role)
   } catch (e) {
     error.value = extractErrorMessage(e, 'Login failed. Check your details.')
