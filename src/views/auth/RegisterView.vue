@@ -50,7 +50,7 @@ async function submit() {
   if (!checkAgreement()) return
   try {
     const { user } = await auth.register(form.value)
-    redirectAfterRegister(user.role)
+    router.push({ name: 'verify-email', query: { email: user.email || form.value.email } })
   } catch (e) {
     fieldErrors.value = extractFieldErrors(e)
     error.value = extractErrorMessage(e, 'Registration failed. Please check your details and try again.')
