@@ -7,6 +7,7 @@ const routes = [
   { path: '/register', name: 'register', component: () => import('@/views/auth/RegisterView.vue'), meta: { guestOnly: true } },
   { path: '/forgot-password', name: 'forgot-password', component: () => import('@/views/auth/ForgotPasswordView.vue'), meta: { guestOnly: true } },
   { path: '/reset-password', name: 'reset-password', component: () => import('@/views/auth/ResetPasswordView.vue'), meta: { guestOnly: true } },
+  { path: '/verify-email', name: 'verify-email', component: () => import('@/views/auth/VerifyEmailView.vue') },
 
   // ── Public (browsable by anyone; booking itself still requires login) ──
   {
@@ -138,6 +139,10 @@ export function homeRouteFor(role) {
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+
+  if (auth.isAuthenticated && auth.user && !auth.user.email_verified_at && to.name !== 'verify-email') {
+    return { name: 'verify-email', query: { email: auth.user.email } }
+  }
 
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return homeRouteFor(auth.user?.role)
