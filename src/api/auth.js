@@ -16,6 +16,9 @@ export default {
   google(credential) {
     return api.post('/auth/google', { credential })
   },
+  resendVerificationEmail() {
+    return api.post('/email/verification-notification')
+  },
   forgotPassword(email) {
     return api.post('/forgot-password', { email })
   },
