@@ -14,7 +14,8 @@ export default defineConfig({
      'https://glam-frontend-lemon.vercel.app/',
      '.ngrok-free.app',
      '.ngrok.app',
-     'antitoxic-uncooked-upon.ngrok-free.dev'
+     'antitoxic-uncooked-upon.ngrok-free.dev',
+     'https://flairplace.onrender.com/'
                 ],
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
