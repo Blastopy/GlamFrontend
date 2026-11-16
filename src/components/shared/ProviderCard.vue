@@ -31,6 +31,14 @@ function markBroken(url) {
   brokenUrls.value.add(url)
 }
 
+function reviewCount(provider) {
+  return Number(provider.fresh_reviews_count ?? provider.reviews_count ?? 0)
+}
+
+function averageRating(provider) {
+  return Number(provider.reviews_avg_rating ?? provider.average_rating ?? 0)
+}
+
 // Deterministic-ish pick so the same card doesn't flicker between icons on re-render
 function fallbackMotif(provider) {
   return motifs[provider.id % motifs.length]
@@ -78,12 +86,12 @@ function fallbackMotif(provider) {
           <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-clay-600">{{ provider.provider_type || 'Provider' }}</p>
           <h3 class="mt-1 truncate font-heading text-lg font-semibold leading-6 text-ink transition-colors group-hover:text-clay-700">{{ provider.business_name }}</h3>
         </div>
-        <div v-if="provider.reviews_count" class="flex shrink-0 items-center gap-1 rounded-md bg-paper px-2 py-1 text-xs font-semibold text-ink">
+        <div v-if="reviewCount(provider) > 0" class="flex shrink-0 items-center gap-1 rounded-md bg-paper px-2 py-1 text-xs font-semibold text-ink">
           <svg viewBox="0 0 20 20" class="h-3.5 w-3.5 text-amber-500" fill="currentColor" aria-hidden="true">
             <path d="M10 1.5l2.6 5.3 5.9.9-4.25 4.1 1 5.8L10 14.9l-5.25 2.7 1-5.8L1.5 7.7l5.9-.9L10 1.5z" />
           </svg>
-          {{ Number(provider.average_rating || 0).toFixed(1) }}
-          <span class="font-normal text-ink-soft">({{ provider.reviews_count }})</span>
+          {{ averageRating(provider).toFixed(1) }}
+          <span class="font-normal text-ink-soft">({{ reviewCount(provider) }})</span>
         </div>
         <span v-else class="shrink-0 rounded-md bg-clay-50 px-2 py-1 text-xs font-semibold text-clay-700">New</span>
       </div>
