@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLoadingStore } from '@/stores/loading'
+import { setSeo } from '@/utils/seo'
 
 const routes = [
   { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue'), meta: { guestOnly: true } },
@@ -14,36 +15,43 @@ const routes = [
     path: '/',
     name: 'discover',
     component: () => import('@/views/client/DiscoverView.vue'),
+    meta: { seo: { description: 'Find and book trusted barbers, salons and nail specialists near you in Kenya. Browse real work, compare upfront prices and book in minutes.' } },
   },
   {
     path: '/providers',
     name: 'providers-directory',
     component: () => import('@/views/public/ProvidersView.vue'),
+    meta: { seo: { title: 'Barbers, salons & nail specialists near you', description: 'Compare barbers, salons and nail specialists in Kenya by rating, price and distance. View real portfolios and book your next appointment on Flairplace.' } },
   },
   {
     path: '/about',
     name: 'about',
     component: () => import('@/views/public/AboutView.vue'),
+    meta: { seo: { title: 'About us', description: 'Flairplace connects clients with independent barbers, salons and nail specialists in Kenya. Learn how we make great beauty services easy to find and book.' } },
   },
   {
     path: '/contact',
     name: 'contact',
     component: () => import('@/views/public/ContactView.vue'),
+    meta: { seo: { title: 'Contact us', description: 'Questions about bookings, payments or listing your beauty business? Contact the Flairplace team by email, phone or our contact form.' } },
   },
   {
     path: '/privacy',
     name: 'privacy',
     component: () => import('@/views/public/PrivacyView.vue'),
+    meta: { seo: { title: 'Privacy Policy', description: 'How Flairplace collects, uses and protects your personal data, in line with the Kenya Data Protection Act, 2019.' } },
   },
   {
     path: '/terms',
     name: 'terms',
     component: () => import('@/views/public/TermsView.vue'),
+    meta: { seo: { title: 'Terms & Conditions', description: 'The terms that apply when you use Flairplace to discover, book or offer beauty services in Kenya.' } },
   },
   {
     path: '/providers/:id',
     name: 'provider-profile',
     component: () => import('@/views/client/ProviderProfileView.vue'),
+    meta: { seo: { title: 'Beauty provider', description: 'View services, prices, photos, reviews and location, then book an appointment on Flairplace.' } },
   },
 
   // ── Client-facing ────────────────────────────────
@@ -177,6 +185,14 @@ router.beforeEach((to, from) => {
   if (to.path !== from.path) useLoadingStore().startNavigation()
 })
 router.afterEach(() => useLoadingStore().stopNavigation())
+
+// SEO: public pages get their own title/description; private and auth pages
+// (no meta.seo) are marked noindex so they stay out of search results.
+// The provider profile view refines this once the provider has loaded.
+router.afterEach((to) => {
+  const seo = to.meta.seo
+  setSeo(seo ? { ...seo, path: to.path } : { path: to.path, noindex: true })
+})
 router.onError(() => useLoadingStore().stopNavigation())
 
 export default router

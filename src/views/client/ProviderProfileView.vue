@@ -5,6 +5,7 @@ import { useProvidersStore } from '@/stores/providers'
 import { useAppointmentsStore } from '@/stores/appointments'
 import { useAuthStore } from '@/stores/auth'
 import { extractErrorMessage } from '@/utils/errors'
+import { setSeo, SITE_URL } from '@/utils/seo'
 import ProviderMap from '@/components/shared/ProviderMap.vue'
 
 const route = useRoute()
@@ -36,6 +37,7 @@ async function load() {
   loadError.value = ''
   try {
     await providers.fetchOne(route.params.id)
+    applyProviderSeo(providers.current)
     scrollToRequestedStyle()
   } catch (e) {
     loadError.value = extractErrorMessage(e, 'Could not load this provider. Please go back and try again.')
@@ -43,6 +45,52 @@ async function load() {
 }
 
 onMounted(load)
+
+// Search engines: "<Business> – Barber in <area>" title, a real description,
+// and schema.org LocalBusiness data (services, prices, rating, location).
+const SCHEMA_TYPES = { barber: 'HairSalon', salon: 'BeautySalon', manicurist: 'NailSalon' }
+const TYPE_LABELS = { barber: 'Barber', salon: 'Salon', manicurist: 'Nail specialist' }
+
+function applyProviderSeo(p) {
+  if (!p) return
+  const typeLabel = TYPE_LABELS[p.provider_type] || 'Beauty professional'
+  const place = p.address ? ` in ${p.address}` : ''
+  const services = p.services || []
+  const serviceNames = services.slice(0, 4).map((s) => s.name).filter(Boolean).join(', ')
+  const reviews = p.reviews || []
+  const avg = reviews.length ? reviews.reduce((sum, r) => sum + Number(r.rating), 0) / reviews.length : 0
+  const image = services.find((s) => s.image_url)?.image_url
+  const path = `/providers/${p.id}`
+
+  const description = p.bio?.trim()
+    || `${p.business_name} is a ${typeLabel.toLowerCase()}${place}.${serviceNames ? ` Services include ${serviceNames}.` : ''} View prices, photos and reviews, and book on Flairplace.`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': SCHEMA_TYPES[p.provider_type] || 'HealthAndBeautyBusiness',
+    name: p.business_name,
+    url: `${SITE_URL}${path}`,
+    description,
+    ...(image && { image }),
+    ...(p.address && { address: { '@type': 'PostalAddress', streetAddress: p.address, addressCountry: 'KE' } }),
+    ...(Number.isFinite(parseFloat(p.latitude)) && Number.isFinite(parseFloat(p.longitude)) && {
+      geo: { '@type': 'GeoCoordinates', latitude: parseFloat(p.latitude), longitude: parseFloat(p.longitude) },
+    }),
+    ...(p.user?.phone && { telephone: p.user.phone }),
+    ...(reviews.length && {
+      aggregateRating: { '@type': 'AggregateRating', ratingValue: avg.toFixed(1), reviewCount: reviews.length, bestRating: 5, worstRating: 1 },
+    }),
+    ...(services.length && {
+      makesOffer: services.map((s) => ({
+        '@type': 'Offer',
+        itemOffered: { '@type': 'Service', name: s.name },
+        ...(s.price != null && { price: String(s.price), priceCurrency: 'KES' }),
+      })),
+    }),
+  }
+
+  setSeo({ title: `${p.business_name} – ${typeLabel}${place}`, description, path, image, jsonLd })
+}
 
 // Arriving from a "trending styles" photo click (?style=<id>) — scroll that
 // specific style into view and give it a lasting highlight so it's obvious

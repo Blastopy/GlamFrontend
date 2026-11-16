@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Private and account pages
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /messages
+Disallow: /my-appointments
+Disallow: /provider/
+Disallow: /reset-password
+
+Sitemap: https://flairplace.com/sitemap.xml
