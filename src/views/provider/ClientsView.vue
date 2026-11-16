@@ -27,7 +27,7 @@ async function addClient() {
   if (!newClientId.value) return
   addError.value = ''
   try {
-    await clientsApi.add({ client_id: newClientId.value, notes: notes.value, source: 'manual_add' })
+    await clientsApi.add({ client_name: newClientId.value, notes: notes.value, source: 'manual_add' })
     newClientId.value = ''
     notes.value = ''
     await load()
