@@ -124,10 +124,28 @@ async function useCurrentLocation() {
 
 async function toggleOpen(open) {
   togglingOpen.value = true
+  savedMsg.value = ''
   try {
-    await providersApi.toggleOpen({ is_open: open, closed_reason: open ? null : closedReason.value })
-    isOpen.value = open
-    savedMsg.value = open ? "You're now shown as open." : "You're now shown as closed."
+    const { data } = await providersApi.toggleOpen({
+      is_open: open,
+      closed_reason: open ? null : (closedReason.value.trim() || null),
+    })
+
+    // Use the state returned by the API, not the requested value.
+    isOpen.value = Boolean(data.is_open)
+    closedReason.value = data.closed_reason || ''
+
+    // Keep the cached user profile in sync so a refresh does not show
+    // the previous open/closed status.
+    const profileKey = auth.user?.providerProfile ? 'providerProfile' : 'provider_profile'
+    if (auth.user?.[profileKey]) {
+      auth.user[profileKey] = { ...auth.user[profileKey], ...data }
+      localStorage.setItem('auth_user', JSON.stringify(auth.user))
+    }
+
+    savedMsg.value = isOpen.value
+      ? "You're now shown as open."
+      : "You're now shown as closed."
   } catch (e) {
     notifications.error(extractErrorMessage(e, 'Could not update your open/closed status.'))
   } finally {
