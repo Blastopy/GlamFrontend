@@ -260,4 +260,109 @@ onMounted(load)
             <div class="flex gap-2 sm:shrink-0">
               <RouterLink
                 :to="`/messages/${c.id}`"
-                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-clay-600/20 transition hover:bg-clay-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-clay-600/20 transition hover:bg-clay-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible:ring-offset-2 sm:flex-none"
+              >
+                <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4" aria-hidden="true">
+                  <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9A1.5 1.5 0 0 1 16 5.5v6a1.5 1.5 0 0 1-1.5 1.5H8l-4 3V5.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                </svg>
+
+                Message
+              </RouterLink>
+
+              <button
+                type="button"
+                class="inline-flex flex-1 items-center justify-center rounded-xl border border-ink/10 px-4 py-2 text-sm font-semibold text-ink-soft transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 sm:flex-none"
+                @click="removeClient(c)"
+              >
+                Remove
+              </button>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Add client -->
+      <aside class="lg:order-2 lg:sticky lg:top-24 lg:self-start">
+        <form
+          class="relative overflow-hidden rounded-3xl border border-ink/10 bg-white p-6 shadow-xl shadow-ink/5"
+          novalidate
+          @submit.prevent="addClient"
+        >
+          <div
+            aria-hidden="true"
+            class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-clay-400 via-clay-600 to-clay-800"
+          />
+
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-clay-600">
+            Manual add
+          </p>
+
+          <h2 class="mt-1 font-heading text-xl font-semibold text-ink">
+            Add a client
+          </h2>
+
+          <div class="mt-5 space-y-4">
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-ink">
+                Client name
+              </span>
+
+              <input
+                v-model="newClientName"
+                type="text"
+                maxlength="255"
+                required
+                placeholder="Enter client name"
+                :class="inputClass"
+              />
+            </label>
+
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-ink">
+                Notes
+                <span class="font-normal text-ink-soft">(optional)</span>
+              </span>
+
+              <textarea
+                v-model="notes"
+                rows="3"
+                maxlength="1000"
+                placeholder="Preferences, allergies, usual style…"
+                :class="[inputClass, 'resize-y']"
+              />
+            </label>
+          </div>
+
+          <p
+            v-if="addError"
+            class="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-100"
+          >
+            {{ addError }}
+          </p>
+
+          <button
+            type="submit"
+            :disabled="!newClientName.trim()"
+            class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-clay-600 py-3 text-sm font-semibold text-white shadow-lg shadow-clay-600/25 transition hover:bg-clay-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4" aria-hidden="true">
+              <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+
+            Add client
+          </button>
+
+          <p class="mt-4 flex gap-2 rounded-xl bg-paper/70 px-3 py-2.5 text-xs leading-5 text-ink-soft">
+            <svg viewBox="0 0 20 20" fill="none" class="mt-0.5 h-4 w-4 shrink-0 text-clay-600" aria-hidden="true">
+              <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5" />
+              <path d="M10 9v4.5M10 6.5h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+
+            Clients are also added automatically once you mark their appointment as completed.
+          </p>
+        </form>
+      </aside>
+    </div>
+  </div>
+</template>
+```
