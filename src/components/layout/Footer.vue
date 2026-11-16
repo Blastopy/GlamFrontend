@@ -3,8 +3,8 @@ const year = new Date().getFullYear()
 
 // Update these with the business's real details/handles before launch.
 const contact = {
-  email: 'info@flairplace.com',
-  phone: '+254 7160 634 972',
+  email: 'flairpace.ke@gmail.com',
+  phone: '+2547 160 658 893',
 }
 
 const socials = [

@@ -3,7 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import contactApi from '@/api/contact'
 import { extractErrorMessage, extractFieldErrors } from '@/utils/errors'
 
-const email = 'info@flairplace.com'
+const email = 'flairplace.ke@gmail.com'
 const phone = '+254 716 065 893'
 const phoneLink = phone.replace(/\s/g, '')
 

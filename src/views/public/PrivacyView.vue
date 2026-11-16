@@ -1,7 +1,7 @@
 <script setup>
 import LegalDocument from '@/components/shared/LegalDocument.vue'
 
-const email = 'info@flairplace.com'
+const email = 'flairplace.ke@gmail.com'
 
 const sections = [
   {
