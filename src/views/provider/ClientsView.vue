@@ -36,13 +36,16 @@ async function addClient() {
   }
 }
 
-async function removeClient(id) {
+async function removeClient(client) {
   if (!confirm('Remove this client from your book?')) return
+
   try {
-    await clientsApi.remove(id)
+    await clientsApi.remove(client.id, client.type)
     await load()
   } catch (e) {
-    notifications.error(extractErrorMessage(e, 'Could not remove this client.'))
+    notifications.error(
+      extractErrorMessage(e, 'Could not remove this client.')
+    )
   }
 }
 
@@ -180,7 +183,7 @@ const inputClass = 'w-full min-w-0 rounded-xl border border-ink/10 bg-paper/40 p
               <button
                 type="button"
                 class="inline-flex flex-1 items-center justify-center rounded-xl border border-ink/10 px-4 py-2 text-sm font-semibold text-ink-soft transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 sm:flex-none"
-                @click="removeClient(c.id)"
+                @click="removeClient(c)""
               >
                 Remove
               </button>
