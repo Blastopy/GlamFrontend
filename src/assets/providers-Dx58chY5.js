@@ -1,0 +1,1 @@
+import{t as e}from"./client-DB9PQklI.js";var t={list(t={}){return e.get(`/providers`,{params:t})},show(t){return e.get(`/providers/${t}`)},services(t){return e.get(`/providers/${t}/services`)},updateProfile(t){return e.patch(`/provider/profile`,t)},toggleOpen(t){return e.patch(`/provider/status`,t)}};export{t};

@@ -1,0 +1,1 @@
+function e(e,t=`Something went wrong. Please try again.`){if(!e?.response)return`Could not reach the server. Check your connection and try again.`;let n=e.response.data;if(n?.message)return n.message;if(n?.errors){let e=Object.values(n.errors)[0];if(Array.isArray(e)&&e.length)return e[0]}return t}function t(e){return e?.response?.data?.errors||{}}export{t as n,e as t};

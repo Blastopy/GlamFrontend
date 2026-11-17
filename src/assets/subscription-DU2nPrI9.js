@@ -1,0 +1,1 @@
+import{t as e}from"./client-DB9PQklI.js";var t={status(){return e.get(`/provider/subscription`)},pay(t){return e.post(`/provider/subscription/pay`,{phone:t})},poll(t){return e.get(`/provider/subscription/${t}/poll`)}};export{t};
