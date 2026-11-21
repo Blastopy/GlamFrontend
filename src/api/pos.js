@@ -3,6 +3,7 @@ import api from './client'
 export default {
   sessions() { return api.get('/pos/cash-sessions') },
   loyaltyCustomers() { return api.get('/pos/loyalty-customers') },
+  giftCard(code) { return api.get(`/pos/gift-cards/${encodeURIComponent(code)}`) },
   openSession(payload) { return api.post('/pos/cash-sessions/open', payload) },
   closeSession(id, payload) { return api.post(`/pos/cash-sessions/${id}/close`, payload) },
   checkout(payload) { return api.post('/pos/checkout', payload) },
