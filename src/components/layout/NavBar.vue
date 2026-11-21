@@ -108,6 +108,7 @@ const primaryLinks = computed(() => {
       { to: '/dashboard/procurement', label: 'Purchasing', icon: 'document' },
       { to: '/dashboard/clients', label: 'Clients', icon: 'clients' },
       { to: '/dashboard/branches', label: 'Branches', icon: 'settings' },
+      { to: '/dashboard/team', label: 'Staff & Permissions', icon: 'shield' },
       { to: '/messages', label: 'Messages', icon: 'messages', badge: unreadMessages.value },
       { to: '/dashboard/profile', label: 'Profile', icon: 'profile' },
     ]
