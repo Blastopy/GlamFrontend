@@ -11,6 +11,7 @@ const branchId = ref('')
 const statusFilter = ref('')
 const appointments = ref([])
 const clients = ref([])
+const guestCustomers = ref([])
 const services = ref([])
 const branches = ref([])
 const loading = ref(false)
@@ -28,7 +29,7 @@ function localDate(date) {
   return `${y}-${m}-${day}`
 }
 function emptyForm() {
-  return { client_id: '', service_ids: [], branch_id: '', scheduled_at: '', booking_source: 'staff', client_notes: '', provider_notes: '' }
+  return { client_mode: 'registered', client_id: '', business_customer_id: '', guest_name: '', guest_phone: '', guest_email: '', service_ids: [], branch_id: '', scheduled_at: '', booking_source: 'staff', client_notes: '', provider_notes: '' }
 }
 function dateAt(value, hour = 0) {
   const d = new Date(value + 'T00:00:00')
@@ -126,6 +127,7 @@ async function loadOptions() {
   try {
     const { data } = await appointmentsApi.calendarOptions()
     clients.value = data.clients || []
+    guestCustomers.value = data.guestCustomers || []
     services.value = data.services || []
     branches.value = data.branches || []
     if (!branchId.value && branches.value.length) branchId.value = String(branches.value.find(b => b.is_default)?.id || branches.value[0].id)
@@ -162,12 +164,17 @@ function newAppointment(date = selectedDate.value) {
   formOpen.value = true
 }
 function closeForm() { formOpen.value = false; error.value = '' }
+function selectGuestCustomer() {
+  const guest = guestCustomers.value.find((c) => String(c.id) === String(form.value.business_customer_id))
+  if (guest) { form.value.guest_name = guest.name; form.value.guest_phone = guest.phone || ''; form.value.guest_email = guest.email || '' }
+  else { form.value.guest_name = ''; form.value.guest_phone = ''; form.value.guest_email = '' }
+}
 async function submitAppointment() {
   error.value = ''
   if (!form.value.service_ids.length) { error.value = 'Choose at least one service.'; return }
   saving.value = true
   try {
-    const payload = { ...form.value, client_id: Number(form.value.client_id), branch_id: form.value.branch_id ? Number(form.value.branch_id) : null, service_ids: form.value.service_ids.map(Number), scheduled_at: form.value.scheduled_at.replace('T', ' ') + ':00' }
+    const payload = { ...form.value, client_id: form.value.client_mode === 'registered' ? Number(form.value.client_id) : null, business_customer_id: form.value.client_mode === 'guest' && form.value.business_customer_id ? Number(form.value.business_customer_id) : null, branch_id: form.value.branch_id ? Number(form.value.branch_id) : null, booking_source: form.value.client_mode === 'guest' ? 'walk_in' : form.value.booking_source, service_ids: form.value.service_ids.map(Number), scheduled_at: form.value.scheduled_at.replace('T', ' ') + ':00' }
     const { data } = await appointmentsApi.createManaged(payload)
     notifications.success('Appointment created.')
     formOpen.value = false
@@ -261,9 +268,9 @@ onMounted(async () => { await loadOptions(); await load() })
             <div class="flex gap-3">
               <div class="min-w-20 rounded-lg bg-paper px-3 py-2 text-center text-sm font-bold text-ink">{{ timeOf(appt.scheduled_at) }}</div>
               <div class="min-w-0">
-                <h3 class="font-semibold text-ink">{{ appt.client?.name || 'Client' }}</h3>
+                <h3 class="font-semibold text-ink">{{ appt.client?.name || appt.business_customer?.name || 'Guest customer' }}</h3>
                 <p class="text-sm text-clay-700">{{ serviceNames(appt) }}</p>
-                <p class="mt-1 text-xs text-ink-soft">{{ appt.client?.phone || 'No phone' }} · {{ appt.branch?.name || 'Branch' }} · {{ appt.booking_source || 'online' }}</p>
+                <p class="mt-1 text-xs text-ink-soft">{{ appt.client?.phone || appt.business_customer?.phone || 'No phone' }} · {{ appt.branch?.name || 'Branch' }} · {{ appt.booking_source || 'online' }}</p>
                 <p v-if="appt.client_notes" class="mt-1 text-sm text-ink-soft">Note: {{ appt.client_notes }}</p>
                 <p v-if="appt.provider_notes" class="mt-1 text-sm text-ink-soft">Staff note: {{ appt.provider_notes }}</p>
               </div>
@@ -288,7 +295,7 @@ onMounted(async () => { await loadOptions(); await load() })
           <div class="space-y-1">
             <button v-for="appt in dayAppointments(day)" :key="appt.id" @click="selectDay(day)" class="w-full rounded-lg border p-2 text-left text-xs" :class="statusClass(appt.status)">
               <span class="font-semibold">{{ timeOf(appt.scheduled_at) }}</span>
-              <span class="mt-0.5 block truncate">{{ appt.client?.name }}</span>
+              <span class="mt-0.5 block truncate">{{ appt.client?.name || appt.business_customer?.name || 'Guest customer' }}</span>
               <span class="block truncate">{{ serviceNames(appt) }}</span>
             </button>
           </div>
@@ -316,7 +323,20 @@ onMounted(async () => { await loadOptions(); await load() })
       <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
         <div class="flex items-start justify-between gap-3"><h2 class="font-heading text-xl font-semibold">Create appointment</h2><button @click="closeForm" class="rounded-lg px-2 py-1 text-xl">×</button></div>
         <form class="mt-4 grid gap-4 sm:grid-cols-2" @submit.prevent="submitAppointment">
-          <label class="grid gap-1 text-sm">Client <select v-model="form.client_id" required class="rounded-lg border px-3 py-2.5"><option value="">Select a client</option><option v-for="client in clients" :key="client.id" :value="String(client.id)">{{ client.name }} {{ client.phone ? '· '+client.phone : '' }}</option></select></label>
+          <div class="grid gap-2 text-sm sm:col-span-2">
+            <span class="font-medium">Customer type</span>
+            <div class="flex flex-wrap gap-3">
+              <label class="inline-flex items-center gap-2"><input v-model="form.client_mode" type="radio" value="registered" /> Registered customer</label>
+              <label class="inline-flex items-center gap-2"><input v-model="form.client_mode" type="radio" value="guest" /> Walk-in guest</label>
+            </div>
+          </div>
+          <label v-if="form.client_mode==='registered'" class="grid gap-1 text-sm">Client <select v-model="form.client_id" required class="rounded-lg border px-3 py-2.5"><option value="">Select a client</option><option v-for="client in clients" :key="client.id" :value="String(client.id)">{{ client.name }} {{ client.phone ? '· '+client.phone : '' }}</option></select><span v-if="!clients.length" class="text-xs text-ink-soft">Your client book is empty. Online bookings will appear here after they book.</span></label>
+          <template v-else>
+            <label class="grid gap-1 text-sm">Existing guest <select v-model="form.business_customer_id" @change="selectGuestCustomer" class="rounded-lg border px-3 py-2.5"><option value="">New walk-in guest</option><option v-for="guest in guestCustomers" :key="guest.id" :value="String(guest.id)">{{ guest.name }} {{ guest.phone ? '· '+guest.phone : '' }}</option></select></label>
+            <label class="grid gap-1 text-sm">Guest name <input v-model="form.guest_name" required class="rounded-lg border px-3 py-2.5" /></label>
+            <label class="grid gap-1 text-sm">Guest phone <input v-model="form.guest_phone" type="tel" class="rounded-lg border px-3 py-2.5" /></label>
+            <label class="grid gap-1 text-sm">Guest email <input v-model="form.guest_email" type="email" class="rounded-lg border px-3 py-2.5" /></label>
+          </template>
           <label class="grid gap-1 text-sm">Branch <select v-model="form.branch_id" class="rounded-lg border px-3 py-2.5"><option value="">Default branch</option><option v-for="branch in branches" :key="branch.id" :value="String(branch.id)">{{ branch.name }}</option></select></label>
           <div class="grid gap-2 sm:col-span-2"><p class="text-sm font-medium">Services *</p><label v-for="service in services" :key="service.id" class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2"><span class="flex items-center gap-2"><input v-model="form.service_ids" type="checkbox" :value="String(service.id)" />{{ service.name }} <span class="text-xs text-ink-soft">{{ service.duration_minutes }} min</span></span><span class="text-sm font-semibold">KES {{ Number(service.price).toLocaleString() }}</span></label><p v-if="!services.length" class="text-sm text-ink-soft">Create active services in Catalogue first.</p></div>
           <label class="grid gap-1 text-sm">Date and time <input v-model="form.scheduled_at" type="datetime-local" required class="rounded-lg border px-3 py-2.5" /></label>
