@@ -100,6 +100,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
+    path: '/dashboard/marketing',
+    name: 'provider-marketing',
+    component: () => import('@/views/provider/MarketingView.vue'),
+    meta: { requiresAuth: true, role: 'provider' },
+  },
+  {
     path: '/dashboard/finance',
     name: 'provider-finance',
     component: () => import('@/views/provider/FinanceView.vue'),
