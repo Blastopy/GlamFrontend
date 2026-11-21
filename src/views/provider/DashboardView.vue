@@ -408,8 +408,8 @@ function initial(name) {
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                   <p class="flex min-w-0 items-center gap-2">
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">{{ initial(appt.client?.name) }}</span>
-                    <span class="truncate font-heading text-lg font-semibold text-ink">{{ appt.client?.name }}</span>
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">{{ initial(appt.client?.name || appt.business_customer?.name) }}</span>
+                    <span class="truncate font-heading text-lg font-semibold text-ink">{{ appt.client?.name || appt.business_customer?.name || 'Walk-in guest' }}</span>
                   </p>
                   <span :class="['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ring-1', statusOf(appt).badge]">
                     <span :class="['h-1.5 w-1.5 rounded-full', statusOf(appt).dot]" />
@@ -427,11 +427,11 @@ function initial(name) {
                     </svg>
                     {{ dateLine(appt.scheduled_at) }}, {{ timeOf(appt.scheduled_at) }}
                   </span>
-                  <a v-if="appt.client?.phone" :href="`tel:${appt.client.phone}`" class="inline-flex items-center gap-1.5 transition hover:text-clay-700">
+                  <a v-if="appt.client?.phone || appt.business_customer?.phone" :href="`tel:${appt.client?.phone || appt.business_customer?.phone}`" class="inline-flex items-center gap-1.5 transition hover:text-clay-700">
                     <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" aria-hidden="true">
                       <path d="M7.2 3.5H5a1.5 1.5 0 0 0-1.5 1.6c.7 8.1 7.2 14.6 15.3 15.4a1.5 1.5 0 0 0 1.7-1.5v-2.3a1.5 1.5 0 0 0-1.2-1.5l-3.1-.6a1.5 1.5 0 0 0-1.4.4l-1.4 1.4a16 16 0 0 1-6.3-6.3l1.4-1.4a1.5 1.5 0 0 0 .4-1.4l-.6-3.1a1.5 1.5 0 0 0-1.1-1.2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    {{ appt.client.phone }}
+                    {{ appt.client?.phone || appt.business_customer?.phone }}
                   </a>
                 </div>
 
