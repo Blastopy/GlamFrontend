@@ -99,7 +99,8 @@ const primaryLinks = computed(() => {
     return [
       { to: '/dashboard', label: 'Dashboard', icon: 'dashboard', exact: true, badge: pendingBookings.value },
       { to: '/dashboard/catalogue', label: 'Catalogue', icon: 'catalogue' },
-      { to: '/dashboard/clients', label: 'Clients', icon: 'clients' },\n      { to: '/dashboard/branches', label: 'Branches', icon: 'settings' },
+      { to: '/dashboard/clients', label: 'Clients', icon: 'clients' },
+      { to: '/dashboard/branches', label: 'Branches', icon: 'settings' },
       { to: '/messages', label: 'Messages', icon: 'messages', badge: unreadMessages.value },
       { to: '/dashboard/profile', label: 'Profile', icon: 'profile' },
     ]
