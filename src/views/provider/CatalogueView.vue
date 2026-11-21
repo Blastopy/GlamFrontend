@@ -329,6 +329,14 @@ const inputClass = 'w-full rounded-xl border border-ink/10 bg-paper/40 px-4 py-3
                 </span>
               </label>
             </div>
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-ink">Buffer time</span>
+              <span class="relative block">
+                <input v-model="form.buffer_minutes" type="number" min="0" max="180" :class="[inputClass, 'pr-12']" />
+                <span class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-ink-soft">min</span>
+              </span>
+              <span class="mt-1 block text-xs text-ink-soft">Extra time after the service for preparation or cleanup.</span>
+            </label>
           </div>
 
           <p v-if="formError" class="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-100">{{ formError }}</p>
