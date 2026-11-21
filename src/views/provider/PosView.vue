@@ -17,6 +17,8 @@ const loyaltyCustomers = ref([])
 const loyaltyConfig = ref({ enabled: false, point_value: 0, minimum_redemption_points: 0 })
 const selectedCustomerId = ref('')
 const loyaltyPointsToRedeem = ref(0)
+const giftCardCode = ref('')
+const giftCardBalance = ref(0)
 const branchId = ref('')
 const selected = ref({})
 const customerName = ref('')
@@ -41,7 +43,8 @@ const subtotal = computed(() => selectedItems.value.reduce((sum, row) => {
 const activeSession = computed(() => sessions.value.find(s => s.branch_id === Number(branchId.value) && s.user_id === auth.user?.id && s.status === 'open'))
 const selectedCustomer = computed(() => loyaltyCustomers.value.find(c => c.id === Number(selectedCustomerId.value)) || null)
 const loyaltyDiscount = computed(() => Number(loyaltyPointsToRedeem.value || 0) * Number(loyaltyConfig.value.point_value || 0))
-const total = computed(() => Math.max(0, subtotal.value - loyaltyDiscount.value))
+const giftCardDiscount = computed(() => Math.min(Number(giftCardBalance.value || 0), Math.max(0, subtotal.value - loyaltyDiscount.value)))
+const total = computed(() => Math.max(0, subtotal.value - loyaltyDiscount.value - giftCardDiscount.value))
 const money = value => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(Number(value || 0))
 
 async function load() {
@@ -90,6 +93,17 @@ async function startCashSession() {
   } finally { busy.value = false }
 }
 
+async function lookupGiftCard() {
+  giftCardBalance.value = 0
+  if (!giftCardCode.value.trim()) return
+  try {
+    const { data } = await posApi.giftCard(giftCardCode.value.trim())
+    giftCardBalance.value = Number(data.balance || 0)
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Gift card could not be validated.'
+  }
+}
+
 async function checkout() {
   error.value = ''
   if (!selectedItems.value.length) { error.value = 'Choose at least one service.'; return }
@@ -107,6 +121,7 @@ async function checkout() {
       customer_name: customerName.value || selectedCustomer.value?.name || null,
       customer_phone: customerPhone.value || selectedCustomer.value?.phone || null,
       loyalty_points: Number(loyaltyPointsToRedeem.value) > 0 ? Number(loyaltyPointsToRedeem.value) : undefined,
+      gift_card_code: giftCardCode.value.trim() || undefined,
       items: selectedItems.value,
       payments: total.value <= 0 || method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(total.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
     }
@@ -117,14 +132,16 @@ async function checkout() {
     customerPhone.value = ''
     selectedCustomerId.value = ''
     loyaltyPointsToRedeem.value = 0
+    giftCardCode.value = ''
+    giftCardBalance.value = 0
     const phoneForPrompt = mpesaPhone.value
     mpesaPhone.value = ''
     await refreshSales()
     const { data: refreshedLoyalty } = await posApi.loyaltyCustomers()
     loyaltyCustomers.value = refreshedLoyalty.customers || []
-    if (method.value === 'mpesa' && Number(data.total) > 0) {
+    if (method.value === 'mpesa' && (Number(data.total) - Number(data.gift_card_amount || 0)) > 0) {
       try {
-        const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) })
+        const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) - Number(data.gift_card_amount || 0) })
         receipt.value = { ...data, mpesa_payment: prompt }
       } catch (e) {
         error.value = e.response?.data?.message || 'Sale was recorded, but the M-Pesa prompt could not be started.'
@@ -218,6 +235,7 @@ onMounted(load)
           </label>
           <label class="grid gap-1 text-sm">Customer name <input v-model="customerName" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Phone <input v-model="customerPhone" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
+          <label class="grid gap-1 text-sm">Gift card code (optional) <input v-model.trim="giftCardCode" @input="giftCardBalance = 0" @blur="lookupGiftCard" maxlength="32" class="rounded-lg border border-ink/15 px-3 py-2 uppercase" placeholder="FP-XXXXXXXXXXXX" /></label>
           <label class="grid gap-1 text-sm">Payment method
             <select v-model="method" class="rounded-lg border border-ink/15 px-3 py-2"><option value="cash">Cash</option><option value="mpesa">M-Pesa STK Push</option><option value="card">Card (record only)</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option></select>
           </label>
