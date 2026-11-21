@@ -8,6 +8,7 @@ export default {
   createPlan(payload) { return api.post('/memberships/plans', payload) },
   updatePlan(id, payload) { return api.patch(`/memberships/plans/${id}`, payload) },
   subscriptions(params = {}) { return api.get('/memberships/subscriptions', { params }) },
+  customerHistory(customerId) { return api.get(`/memberships/customers/${customerId}/history`) },
   subscribe(payload) { return api.post('/memberships/subscriptions', payload) },
   cancelSubscription(id) { return api.post(`/memberships/subscriptions/${id}/cancel`) },
 }
