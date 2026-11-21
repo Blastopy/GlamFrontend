@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import appointmentsApi from '@/api/appointments'
+import api from '@/api/client'
 import posApi from '@/api/pos'
 import { useNotificationsStore } from '@/stores/notifications'
 
@@ -29,19 +29,11 @@ async function load() {
   loading.value = true
   try {
     const [options, sessionRes, salesRes] = await Promise.all([
-      appointmentsApi.providerCalendarOptions ? appointmentsApi.providerCalendarOptions() : appointmentsApi.list({}),
+      api.get('/provider/calendar/options'),
       posApi.sessions(), posApi.sales({ branch_id: branchId.value || undefined }),
     ])
-    // Compatibility fallback: use the calendar management API for service/branch options.
-    if (options.data?.services) {
-      services.value = options.data.services
-      branches.value = options.data.branches || []
-    } else {
-      const apiClient = (await import('@/api/client')).default
-      const { data } = await apiClient.get('/provider/calendar/options')
-      services.value = data.services || []
-      branches.value = data.branches || []
-    }
+    services.value = options.data.services || []
+    branches.value = options.data.branches || []
     if (!branchId.value && branches.value.length) branchId.value = String((branches.value.find(b => b.is_default) || branches.value[0]).id)
     sessions.value = sessionRes.data
     sales.value = salesRes.data
