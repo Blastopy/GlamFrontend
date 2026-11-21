@@ -1,0 +1,177 @@
+<script setup>
+import { computed, onMounted, ref } from 'vue'
+import appointmentsApi from '@/api/appointments'
+import posApi from '@/api/pos'
+import { useNotificationsStore } from '@/stores/notifications'
+
+const notifications = useNotificationsStore()
+const branches = ref([])
+const services = ref([])
+const sessions = ref([])
+const sales = ref([])
+const branchId = ref('')
+const selected = ref({})
+const customerName = ref('')
+const customerPhone = ref('')
+const method = ref('cash')
+const openingCash = ref(0)
+const loading = ref(true)
+const busy = ref(false)
+const error = ref('')
+const receipt = ref(null)
+
+const selectedItems = computed(() => services.value.filter(s => selected.value[s.id]).map(s => ({ type: 'service', id: s.id, quantity: Number(selected.value[s.id]) })))
+const subtotal = computed(() => selectedItems.value.reduce((sum, row) => sum + Number(services.value.find(s => s.id === row.id)?.price || 0) * row.quantity, 0))
+const activeSession = computed(() => sessions.value.find(s => s.branch_id === Number(branchId.value) && s.status === 'open'))
+const money = value => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(Number(value || 0))
+
+async function load() {
+  loading.value = true
+  try {
+    const [options, sessionRes, salesRes] = await Promise.all([
+      appointmentsApi.providerCalendarOptions ? appointmentsApi.providerCalendarOptions() : appointmentsApi.list({}),
+      posApi.sessions(), posApi.sales({ branch_id: branchId.value || undefined }),
+    ])
+    // Compatibility fallback: use the calendar management API for service/branch options.
+    if (options.data?.services) {
+      services.value = options.data.services
+      branches.value = options.data.branches || []
+    } else {
+      const apiClient = (await import('@/api/client')).default
+      const { data } = await apiClient.get('/provider/calendar/options')
+      services.value = data.services || []
+      branches.value = data.branches || []
+    }
+    if (!branchId.value && branches.value.length) branchId.value = String((branches.value.find(b => b.is_default) || branches.value[0]).id)
+    sessions.value = sessionRes.data
+    sales.value = salesRes.data
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Could not load POS.'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function refreshSales() {
+  const { data } = await posApi.sales({ branch_id: branchId.value || undefined })
+  sales.value = data
+}
+
+async function startCashSession() {
+  busy.value = true
+  try {
+    await posApi.openSession({ branch_id: Number(branchId.value), opening_cash: Number(openingCash.value || 0) })
+    notifications.success('Cash session opened.')
+    const { data } = await posApi.sessions()
+    sessions.value = data
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Could not open cash session.'
+  } finally { busy.value = false }
+}
+
+async function checkout() {
+  error.value = ''
+  if (!selectedItems.value.length) { error.value = 'Choose at least one service.'; return }
+  if (method.value === 'cash' && !activeSession.value) { error.value = 'Open a cash session before recording cash payments.'; return }
+  busy.value = true
+  try {
+    const payload = {
+      branch_id: Number(branchId.value),
+      customer_name: customerName.value || null,
+      customer_phone: customerPhone.value || null,
+      items: selectedItems.value,
+      payments: [{ method: method.value, amount: Number(subtotal.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
+    }
+    const { data } = await posApi.checkout(payload)
+    receipt.value = data
+    selected.value = {}
+    customerName.value = ''
+    customerPhone.value = ''
+    await refreshSales()
+    if (method.value === 'cash') {
+      const { data: updatedSessions } = await posApi.sessions()
+      sessions.value = updatedSessions
+    }
+    notifications.success('Sale recorded.')
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Checkout failed.'
+  } finally { busy.value = false }
+}
+
+async function closeSession(session) {
+  const amount = window.prompt('Counted cash at closing (KES):')
+  if (amount === null) return
+  const value = Number(amount)
+  if (!Number.isFinite(value) || value < 0) { error.value = 'Enter a valid counted cash amount.'; return }
+  try {
+    const { data } = await posApi.closeSession(session.id, { closing_cash: value })
+    notifications.success(`Session closed. Cash variance: ${money(data.cash_difference)}`)
+    const { data: updated } = await posApi.sessions()
+    sessions.value = updated
+  } catch (e) { error.value = e.response?.data?.message || 'Could not close session.' }
+}
+
+onMounted(load)
+</script>
+
+<template>
+  <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div><p class="text-sm font-medium text-clay-600">Business operations</p><h1 class="mt-1 font-heading text-3xl text-ink">Point of Sale</h1><p class="mt-2 text-sm text-ink-soft">Record service sales and payments, manage cash sessions and view receipts.</p></div>
+      <label class="grid gap-1 text-sm">Branch
+        <select v-model="branchId" @change="load" class="rounded-xl border border-ink/15 bg-white px-3 py-2.5">
+          <option v-for="b in branches" :key="b.id" :value="String(b.id)">{{ b.name }}</option>
+        </select>
+      </label>
+    </header>
+    <p v-if="error" class="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
+    <div v-if="loading" class="py-12 text-center text-ink-soft">Loading POS…</div>
+    <div v-else class="grid gap-6 lg:grid-cols-[1.3fr_.7fr]">
+      <section class="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm sm:p-6">
+        <h2 class="font-heading text-xl text-ink">New sale</h2>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+          <label v-for="service in services" :key="service.id" class="flex items-center justify-between gap-3 rounded-xl border border-ink/10 p-3">
+            <div><p class="text-sm font-semibold">{{ service.name }}</p><p class="text-sm text-ink-soft">{{ money(service.price) }}</p></div>
+            <input v-model.number="selected[service.id]" type="number" min="0" max="100" class="w-20 rounded-lg border border-ink/15 px-2 py-1.5" placeholder="Qty" />
+          </label>
+          <p v-if="!services.length" class="text-sm text-ink-soft">No active services found.</p>
+        </div>
+        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+          <label class="grid gap-1 text-sm">Customer name <input v-model="customerName" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
+          <label class="grid gap-1 text-sm">Phone <input v-model="customerPhone" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
+          <label class="grid gap-1 text-sm">Payment method
+            <select v-model="method" class="rounded-lg border border-ink/15 px-3 py-2"><option value="cash">Cash</option><option value="mpesa">M-Pesa (record only)</option><option value="card">Card (record only)</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option></select>
+          </label>
+        </div>
+        <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-4"><span class="font-semibold">Total</span><span class="font-heading text-2xl font-bold">{{ money(subtotal) }}</span></div>
+        <button @click="checkout" :disabled="busy || subtotal <= 0" class="mt-4 w-full rounded-xl bg-ink px-4 py-3 font-semibold text-white disabled:opacity-40">{{ busy ? 'Processing…' : 'Complete sale' }}</button>
+      </section>
+      <aside class="space-y-5">
+        <section class="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+          <h2 class="font-heading text-lg">Cash drawer</h2>
+          <div v-if="activeSession" class="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">Open session · Starting cash {{ money(activeSession.opening_cash) }}
+            <button class="mt-3 block rounded-lg border border-emerald-700/20 px-3 py-2 font-semibold" @click="closeSession(activeSession)">Close & reconcile</button>
+          </div>
+          <div v-else class="mt-3"><label class="grid gap-1 text-sm">Opening cash <input v-model.number="openingCash" type="number" min="0" class="rounded-lg border border-ink/15 px-3 py-2" /></label><button @click="startCashSession" :disabled="busy" class="mt-3 rounded-xl bg-ink px-3 py-2.5 text-sm font-semibold text-white">Open cash session</button></div>
+        </section>
+        <section class="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+          <h2 class="font-heading text-lg">Recent sales</h2>
+          <div class="mt-3 space-y-3">
+            <article v-for="sale in sales.slice(0,10)" :key="sale.id" class="border-b border-ink/5 pb-3 text-sm last:border-0">
+              <div class="flex justify-between gap-2"><strong>{{ sale.receipt_number }}</strong><span class="font-semibold">{{ money(sale.total) }}</span></div><p class="mt-1 text-ink-soft">{{ new Date(sale.created_at).toLocaleString('en-KE') }} · {{ sale.status }}</p>
+            </article>
+            <p v-if="!sales.length" class="text-sm text-ink-soft">No sales recorded yet.</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <div v-if="receipt" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @click.self="receipt=null">
+      <section class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <h2 class="font-heading text-xl">Sale completed</h2><p class="mt-1 text-sm text-ink-soft">{{ receipt.receipt_number }}</p>
+        <div class="my-4 space-y-2 text-sm"><p v-for="item in receipt.items" :key="item.id" class="flex justify-between"><span>{{ item.quantity }} × {{ item.name }}</span><span>{{ money(item.line_total) }}</span></p><div class="border-t pt-3 flex justify-between font-bold"><span>Total</span><span>{{ money(receipt.total) }}</span></div></div>
+        <p class="text-sm">Paid: {{ money(receipt.paid_amount) }} · {{ receipt.status }}</p>
+        <button @click="receipt=null" class="mt-5 w-full rounded-xl bg-ink px-4 py-2.5 font-semibold text-white">Done</button>
+      </section>
+    </div>
+  </main>
+</template>
