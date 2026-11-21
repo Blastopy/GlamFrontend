@@ -98,7 +98,7 @@ async function checkout() {
   if (loyaltyPointsToRedeem.value > Number(selectedCustomer.value?.points_balance || 0)) { error.value = 'The customer does not have enough points.'; return }
   if (loyaltyDiscount.value > subtotal.value) { error.value = 'Points discount cannot exceed the sale subtotal.'; return }
   if (method.value === 'cash' && total.value > 0 && !activeSession.value) { error.value = 'Open a cash session before recording cash payments.'; return }
-  if (method.value === 'mpesa' && !mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
+  if (method.value === 'mpesa' && total.value > 0 && !mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
   busy.value = true
   try {
     const payload = {
@@ -120,6 +120,8 @@ async function checkout() {
     const phoneForPrompt = mpesaPhone.value
     mpesaPhone.value = ''
     await refreshSales()
+    const { data: refreshedLoyalty } = await posApi.loyaltyCustomers()
+    loyaltyCustomers.value = refreshedLoyalty.customers || []
     if (method.value === 'mpesa' && Number(data.total) > 0) {
       try {
         const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) })
