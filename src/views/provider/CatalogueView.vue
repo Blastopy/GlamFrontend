@@ -9,7 +9,7 @@ import servicesApi from '@/api/services'
 const auth = useAuthStore()
 const notifications = useNotificationsStore()
 const services = ref([])
-const form = ref({ name: '', description: '', price: '', duration_minutes: 30 })
+const form = ref({ name: '', description: '', price: '', duration_minutes: 30, buffer_minutes: 0 })
 const imageFile = ref(null)
 const imagePreview = ref(null)
 const editingId = ref(null)
@@ -47,7 +47,7 @@ function onImageChange(e) {
 }
 
 function resetForm() {
-  form.value = { name: '', description: '', price: '', duration_minutes: 30 }
+  form.value = { name: '', description: '', price: '', duration_minutes: 30, buffer_minutes: 0 }
   editingId.value = null
   imageFile.value = null
   imagePreview.value = null
