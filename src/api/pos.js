@@ -7,4 +7,6 @@ export default {
   checkout(payload) { return api.post('/pos/checkout', payload) },
   sales(params = {}) { return api.get('/pos/sales', { params }) },
   refund(id, payload) { return api.post(`/pos/sales/${id}/refund`, payload) },
+  initiateMpesa(id, payload) { return api.post(`/pos/sales/${id}/payments/mpesa`, payload) },
+  paymentStatus(saleId, paymentId) { return api.get(`/pos/sales/${saleId}/payments/${paymentId}`) },
 }
