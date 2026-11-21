@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [frontend]
   push:
-    branches: [flairplace-saas-phase1, flairplace-pos-phase3, flairplace-inventory-phase4, flairplace-procurement-phase5]
+    branches: [flairplace-saas-phase1, flairplace-pos-phase3, flairplace-inventory-phase4, flairplace-procurement-phase5, flairplace-stock-control-phase6]
 
 jobs:
   build:
