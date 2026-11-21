@@ -100,6 +100,7 @@ const primaryLinks = computed(() => {
       { to: '/dashboard', label: 'Dashboard', icon: 'dashboard', exact: true, badge: pendingBookings.value },
       { to: '/dashboard/appointments', label: 'Appointments', icon: 'calendar', badge: pendingBookings.value },
       { to: '/dashboard/catalogue', label: 'Catalogue', icon: 'catalogue' },
+      { to: '/dashboard/pos', label: 'POS', icon: 'dashboard' },
       { to: '/dashboard/clients', label: 'Clients', icon: 'clients' },
       { to: '/dashboard/branches', label: 'Branches', icon: 'settings' },
       { to: '/messages', label: 'Messages', icon: 'messages', badge: unreadMessages.value },
