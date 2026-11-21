@@ -108,6 +108,7 @@ const subscriptionBannerStyle = computed(() => {
 const STATUS = {
   pending: { label: 'Pending', badge: 'bg-amber-50 text-amber-700 ring-amber-200', dot: 'bg-amber-500' },
   confirmed: { label: 'Confirmed', badge: 'bg-clay-50 text-clay-700 ring-clay-200', dot: 'bg-clay-600' },
+  checked_in: { label: 'Checked in', badge: 'bg-blue-50 text-blue-700 ring-blue-200', dot: 'bg-blue-500' },
   in_progress: { label: 'In progress', badge: 'bg-ink text-white ring-ink', dot: 'bg-clay-400' },
   completed: { label: 'Completed', badge: 'bg-sage-50 text-sage-700 ring-sage-200', dot: 'bg-sage-500' },
   cancelled: { label: 'Cancelled', badge: 'bg-ink/5 text-ink-soft ring-ink/10', dot: 'bg-ink/30' },
