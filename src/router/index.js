@@ -94,6 +94,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
+    path: '/dashboard/branches',
+    name: 'provider-branches',
+    component: () => import('@/views/provider/BranchesView.vue'),
+    meta: { requiresAuth: true, role: 'provider' },
+  },
+  {
     path: '/dashboard/profile',
     name: 'provider-profile-edit',
     component: () => import('@/views/provider/ProfileEditView.vue'),
