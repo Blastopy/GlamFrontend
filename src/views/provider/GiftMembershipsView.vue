@@ -157,5 +157,9 @@ onMounted(load)
       <div class="border-b border-ink/10 p-5"><h2 class="font-heading text-xl text-ink">Customer memberships</h2></div>
       <div class="overflow-x-auto"><table class="w-full min-w-[700px] text-left text-sm"><thead class="bg-paper text-xs uppercase tracking-wide text-ink-soft"><tr><th class="px-4 py-3">Customer</th><th class="px-4 py-3">Plan</th><th class="px-4 py-3">Starts</th><th class="px-4 py-3">Ends</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-ink/10"><tr v-for="sub in subscriptions" :key="sub.id"><td class="px-4 py-3 font-semibold">{{ sub.customer?.name }}</td><td class="px-4 py-3">{{ sub.plan?.name }}</td><td class="px-4 py-3">{{ sub.starts_at }}</td><td class="px-4 py-3">{{ sub.ends_at }}</td><td class="px-4 py-3 capitalize">{{ sub.status }}</td><td class="px-4 py-3 text-right"><button @click="showHistory(sub.customer)" class="mr-3 text-xs font-semibold">History</button><button v-if="sub.status === 'active'" @click="cancelMembership(sub)" class="text-xs font-semibold text-red-700">Cancel</button></td></tr></tbody></table></div>
     </section>
+    <section v-if="historyCustomer" class="mt-6 rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">
+      <div class="flex items-center justify-between gap-4"><h2 class="font-heading text-xl text-ink">Membership history · {{ historyCustomer.name }}</h2><button @click="historyCustomer = null" class="text-sm text-ink-soft">Close</button></div>
+      <div class="mt-3 divide-y divide-ink/10"><div v-for="h in historyRows" :key="h.id" class="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><div><strong>{{ h.plan?.name }}</strong><p class="text-ink-soft">{{ h.starts_at }} → {{ h.ends_at }}</p></div><span class="capitalize">{{ h.status }}</span></div><p v-if="!historyRows.length" class="py-3 text-sm text-ink-soft">No membership history.</p></div>
+    </section>
   </main>
 </template>
