@@ -3,8 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import api from '@/api/client'
 import posApi from '@/api/pos'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useAuthStore } from '@/stores/auth'
 
 const notifications = useNotificationsStore()
+const auth = useAuthStore()
 const branches = ref([])
 const services = ref([])
 const sessions = ref([])
@@ -22,7 +24,7 @@ const receipt = ref(null)
 
 const selectedItems = computed(() => services.value.filter(s => selected.value[s.id]).map(s => ({ type: 'service', id: s.id, quantity: Number(selected.value[s.id]) })))
 const subtotal = computed(() => selectedItems.value.reduce((sum, row) => sum + Number(services.value.find(s => s.id === row.id)?.price || 0) * row.quantity, 0))
-const activeSession = computed(() => sessions.value.find(s => s.branch_id === Number(branchId.value) && s.status === 'open'))
+const activeSession = computed(() => sessions.value.find(s => s.branch_id === Number(branchId.value) && s.user_id === auth.user?.id && s.status === 'open'))
 const money = value => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(Number(value || 0))
 
 async function load() {
