@@ -100,12 +100,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
-  {
     path: '/dashboard/service-consumables',
     name: 'provider-service-consumables',
     component: () => import('@/views/provider/ServiceConsumablesView.vue'),
     meta: { requiresAuth: true, role: 'provider' },
   },
+  {
     path: '/dashboard/stock-control',
     name: 'provider-stock-control',
     component: () => import('@/views/provider/StockControlView.vue'),
