@@ -98,6 +98,7 @@ const primaryLinks = computed(() => {
   if (auth.isProvider) {
     return [
       { to: '/dashboard', label: 'Dashboard', icon: 'dashboard', exact: true, badge: pendingBookings.value },
+      { to: '/dashboard/appointments', label: 'Appointments', icon: 'calendar', badge: pendingBookings.value },
       { to: '/dashboard/catalogue', label: 'Catalogue', icon: 'catalogue' },
       { to: '/dashboard/clients', label: 'Clients', icon: 'clients' },
       { to: '/dashboard/branches', label: 'Branches', icon: 'settings' },
