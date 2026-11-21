@@ -103,6 +103,7 @@ const primaryLinks = computed(() => {
       { to: '/dashboard/pos', label: 'POS', icon: 'dashboard' },
       { to: '/dashboard/inventory', label: 'Inventory', icon: 'catalogue' },
       { to: '/dashboard/inventory-reports', label: 'Inventory Reports', icon: 'document' },
+      { to: '/dashboard/finance', label: 'Finances', icon: 'document' },
       { to: '/dashboard/stock-control', label: 'Stock Control', icon: 'document' },
       { to: '/dashboard/service-consumables', label: 'Service Materials', icon: 'catalogue' },
       { to: '/dashboard/procurement', label: 'Purchasing', icon: 'document' },
