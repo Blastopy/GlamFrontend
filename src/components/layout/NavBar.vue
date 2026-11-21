@@ -101,7 +101,7 @@ const primaryLinks = computed(() => {
       { to: '/dashboard/appointments', label: 'Appointments', icon: 'calendar', badge: pendingBookings.value },
       { to: '/dashboard/catalogue', label: 'Catalogue', icon: 'catalogue' },
       { to: '/dashboard/pos', label: 'POS', icon: 'dashboard' },
-      { to: '/dashboard/inventory', label: 'Inventory', icon: 'catalogue' },
+      { to: '/dashboard/inventory', label: 'Inventory', icon: 'catalogue' },\n      { to: '/dashboard/inventory-reports', label: 'Inventory Reports', icon: 'document' },
       { to: '/dashboard/stock-control', label: 'Stock Control', icon: 'document' },
       { to: '/dashboard/service-consumables', label: 'Service Materials', icon: 'catalogue' },
       { to: '/dashboard/procurement', label: 'Purchasing', icon: 'document' },
