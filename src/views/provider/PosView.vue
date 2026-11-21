@@ -17,6 +17,7 @@ const loyaltyCustomers = ref([])
 const loyaltyConfig = ref({ enabled: false, point_value: 0, minimum_redemption_points: 0 })
 const selectedCustomerId = ref('')
 const loyaltyPointsToRedeem = ref(0)
+const applyMembershipDiscount = ref(false)
 const giftCardCode = ref('')
 const giftCardBalance = ref(0)
 const branchId = ref('')
@@ -43,8 +44,9 @@ const subtotal = computed(() => selectedItems.value.reduce((sum, row) => {
 const activeSession = computed(() => sessions.value.find(s => s.branch_id === Number(branchId.value) && s.user_id === auth.user?.id && s.status === 'open'))
 const selectedCustomer = computed(() => loyaltyCustomers.value.find(c => c.id === Number(selectedCustomerId.value)) || null)
 const loyaltyDiscount = computed(() => Number(loyaltyPointsToRedeem.value || 0) * Number(loyaltyConfig.value.point_value || 0))
-const giftCardDiscount = computed(() => Math.min(Number(giftCardBalance.value || 0), Math.max(0, subtotal.value - loyaltyDiscount.value)))
-const total = computed(() => Math.max(0, subtotal.value - loyaltyDiscount.value - giftCardDiscount.value))
+const membershipDiscount = computed(() => applyMembershipDiscount.value && selectedCustomer.value?.active_membership?.plan ? Math.min(Math.max(0, subtotal.value - loyaltyDiscount.value), Math.max(0, subtotal.value - loyaltyDiscount.value) * Number(selectedCustomer.value.active_membership.plan.discount_percent || 0) / 100) : 0)
+const giftCardDiscount = computed(() => Math.min(Number(giftCardBalance.value || 0), Math.max(0, subtotal.value - loyaltyDiscount.value - membershipDiscount.value)))
+const total = computed(() => Math.max(0, subtotal.value - loyaltyDiscount.value - membershipDiscount.value - giftCardDiscount.value))
 const money = value => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(Number(value || 0))
 
 async function load() {
@@ -107,6 +109,7 @@ async function lookupGiftCard() {
 async function checkout() {
   error.value = ''
   if (!selectedItems.value.length) { error.value = 'Choose at least one service.'; return }
+  if (applyMembershipDiscount.value && !selectedCustomer.value?.active_membership) { error.value = 'The selected customer has no active membership.'; return }
   if (loyaltyPointsToRedeem.value > 0 && !selectedCustomer.value) { error.value = 'Select a registered customer before redeeming points.'; return }
   if (loyaltyPointsToRedeem.value > 0 && loyaltyPointsToRedeem.value < loyaltyConfig.value.minimum_redemption_points) { error.value = `At least ${loyaltyConfig.value.minimum_redemption_points} points are required to redeem.`; return }
   if (loyaltyPointsToRedeem.value > Number(selectedCustomer.value?.points_balance || 0)) { error.value = 'The customer does not have enough points.'; return }
@@ -121,6 +124,7 @@ async function checkout() {
       customer_name: customerName.value || selectedCustomer.value?.name || null,
       customer_phone: customerPhone.value || selectedCustomer.value?.phone || null,
       loyalty_points: Number(loyaltyPointsToRedeem.value) > 0 ? Number(loyaltyPointsToRedeem.value) : undefined,
+      apply_membership_discount: applyMembershipDiscount.value || undefined,
       gift_card_code: giftCardCode.value.trim() || undefined,
       items: selectedItems.value,
       payments: total.value <= 0 || method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(total.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
@@ -132,6 +136,7 @@ async function checkout() {
     customerPhone.value = ''
     selectedCustomerId.value = ''
     loyaltyPointsToRedeem.value = 0
+    applyMembershipDiscount.value = false
     giftCardCode.value = ''
     giftCardBalance.value = 0
     const phoneForPrompt = mpesaPhone.value
@@ -242,7 +247,7 @@ onMounted(load)
           <label v-if="method === 'mpesa'" class="grid gap-1 text-sm">Customer M-Pesa phone <input v-model="mpesaPhone" type="tel" placeholder="07XXXXXXXX" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label v-if="loyaltyConfig.enabled && selectedCustomer" class="grid gap-1 text-sm">Redeem loyalty points (balance: {{ Number(selectedCustomer.points_balance || 0) }})<input v-model.number="loyaltyPointsToRedeem" type="number" min="0" :max="selectedCustomer.points_balance || 0" step="1" class="rounded-lg border border-ink/15 px-3 py-2" /><span class="text-xs text-ink-soft">Minimum {{ loyaltyConfig.minimum_redemption_points }} points · {{ money(loyaltyConfig.point_value) }} per point</span></label>
         </div>
-        <div class="mt-5 space-y-2 border-t border-ink/10 pt-4 text-sm"><div class="flex justify-between"><span>Subtotal</span><span>{{ money(subtotal) }}</span></div><div v-if="loyaltyDiscount > 0" class="flex justify-between text-emerald-700"><span>Loyalty discount ({{ loyaltyPointsToRedeem }} points)</span><span>-{{ money(loyaltyDiscount) }}</span></div><div class="flex items-center justify-between"><span class="font-semibold">Total</span><span class="font-heading text-2xl font-bold">{{ money(total) }}</span></div></div>
+        <div class="mt-5 space-y-2 border-t border-ink/10 pt-4 text-sm"><div class="flex justify-between"><span>Subtotal</span><span>{{ money(subtotal) }}</span></div><div v-if="loyaltyDiscount > 0" class="flex justify-between text-emerald-700"><span>Loyalty discount ({{ loyaltyPointsToRedeem }} points)</span><span>-{{ money(loyaltyDiscount) }}</span></div><div v-if="selectedCustomer?.active_membership" class="flex items-center justify-between gap-2"><label class="flex items-center gap-2"><input type="checkbox" v-model="applyMembershipDiscount" />Membership benefit ({{ selectedCustomer.active_membership.plan.discount_percent }}%)</label><span v-if="membershipDiscount > 0" class="text-emerald-700">-{{ money(membershipDiscount) }}</span></div><div class="flex items-center justify-between"><span class="font-semibold">Total</span><span class="font-heading text-2xl font-bold">{{ money(total) }}</span></div></div>
         <button @click="checkout" :disabled="busy || subtotal <= 0 || loyaltyPointsToRedeem > Number(selectedCustomer?.points_balance || 0) || loyaltyDiscount > subtotal" class="mt-4 w-full rounded-xl bg-ink px-4 py-3 font-semibold text-white disabled:opacity-40">{{ busy ? 'Processing…' : 'Complete sale' }}</button>
       </section>
       <aside class="space-y-5">
