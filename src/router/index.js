@@ -82,6 +82,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
+    path: '/dashboard/appointments',
+    name: 'provider-appointments',
+    component: () => import('@/views/provider/AppointmentsCalendarView.vue'),
+    meta: { requiresAuth: true, role: 'provider' },
+  },
+  {
     path: '/dashboard/catalogue',
     name: 'provider-catalogue',
     component: () => import('@/views/provider/CatalogueView.vue'),
