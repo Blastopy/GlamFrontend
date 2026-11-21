@@ -14,7 +14,7 @@ export default {
     return api.patch(`/provider/clients/${clientId}`, { notes })
   },
 
-  remove(clientId, type) {
-    return api.delete(`/provider/clients/${type}/${clientId}`)
+  remove(clientId) {
+    return api.delete(`/provider/clients/${clientId}`)
   },
 }
