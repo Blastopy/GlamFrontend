@@ -79,17 +79,21 @@ async function checkout() {
       payments: method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(subtotal.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
     }
     const { data } = await posApi.checkout(payload)
-    if (method.value === 'mpesa') {
-      const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: mpesaPhone.value, amount: Number(subtotal.value) })
-      receipt.value = { ...data, mpesa_payment: prompt }
-    } else {
-      receipt.value = data
-    }
+    receipt.value = data
     selected.value = {}
     customerName.value = ''
     customerPhone.value = ''
+    const phoneForPrompt = mpesaPhone.value
     mpesaPhone.value = ''
     await refreshSales()
+    if (method.value === 'mpesa') {
+      try {
+        const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) })
+        receipt.value = { ...data, mpesa_payment: prompt }
+      } catch (e) {
+        error.value = e.response?.data?.message || 'Sale was recorded, but the M-Pesa prompt could not be started. Retry from the sale payment screen.'
+      }
+    }
     if (method.value === 'cash') {
       const { data: updatedSessions } = await posApi.sessions()
       sessions.value = updatedSessions
