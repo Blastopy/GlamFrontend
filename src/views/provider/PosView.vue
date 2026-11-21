@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import api from '@/api/client'
 import posApi from '@/api/pos'
+import inventoryApi from '@/api/inventory'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useAuthStore } from '@/stores/auth'
 
@@ -9,6 +10,7 @@ const notifications = useNotificationsStore()
 const auth = useAuthStore()
 const branches = ref([])
 const services = ref([])
+const inventoryItems = ref([])
 const sessions = ref([])
 const sales = ref([])
 const branchId = ref('')
@@ -23,23 +25,37 @@ const busy = ref(false)
 const error = ref('')
 const receipt = ref(null)
 
-const selectedItems = computed(() => services.value.filter(s => selected.value[s.id]).map(s => ({ type: 'service', id: s.id, quantity: Number(selected.value[s.id]) })))
-const subtotal = computed(() => selectedItems.value.reduce((sum, row) => sum + Number(services.value.find(s => s.id === row.id)?.price || 0) * row.quantity, 0))
+const selectedItems = computed(() => [
+  ...services.value.filter(s => selected.value['service-' + s.id]).map(s => ({ type: 'service', id: s.id, quantity: Number(selected.value['service-' + s.id]) })),
+  ...inventoryItems.value.filter(i => selected.value['inventory-' + i.id]).map(i => ({ type: 'inventory', id: i.id, quantity: Number(selected.value['inventory-' + i.id]) })),
+])
+const subtotal = computed(() => selectedItems.value.reduce((sum, row) => {
+  const item = row.type === 'service' ? services.value.find(s => s.id === row.id) : inventoryItems.value.find(i => i.id === row.id)
+  const price = row.type === 'service' ? item?.price : item?.selling_price
+  return sum + Number(price || 0) * row.quantity
+}, 0))
 const activeSession = computed(() => sessions.value.find(s => s.branch_id === Number(branchId.value) && s.user_id === auth.user?.id && s.status === 'open'))
 const money = value => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(Number(value || 0))
 
 async function load() {
   loading.value = true
   try {
-    const [options, sessionRes, salesRes] = await Promise.all([
+    const [options, sessionRes] = await Promise.all([
       api.get('/provider/calendar/options'),
-      posApi.sessions(), posApi.sales({ branch_id: branchId.value || undefined }),
+      posApi.sessions(),
     ])
     services.value = options.data.services || []
     branches.value = options.data.branches || []
     if (!branchId.value && branches.value.length) branchId.value = String((branches.value.find(b => b.is_default) || branches.value[0]).id)
     sessions.value = sessionRes.data
-    sales.value = salesRes.data
+    if (branchId.value) {
+      const [salesRes, stockRes] = await Promise.all([
+        posApi.sales({ branch_id: branchId.value }),
+        inventoryApi.list({ branch_id: branchId.value }),
+      ])
+      sales.value = salesRes.data
+      inventoryItems.value = stockRes.data.items || []
+    }
   } catch (e) {
     error.value = e.response?.data?.message || 'Could not load POS.'
   } finally {
@@ -164,9 +180,17 @@ onMounted(load)
         <div class="mt-4 grid gap-3 sm:grid-cols-2">
           <label v-for="service in services" :key="service.id" class="flex items-center justify-between gap-3 rounded-xl border border-ink/10 p-3">
             <div><p class="text-sm font-semibold">{{ service.name }}</p><p class="text-sm text-ink-soft">{{ money(service.price) }}</p></div>
-            <input v-model.number="selected[service.id]" type="number" min="0" max="100" class="w-20 rounded-lg border border-ink/15 px-2 py-1.5" placeholder="Qty" />
+            <input v-model.number="selected['service-' + service.id]" type="number" min="0" max="100" class="w-20 rounded-lg border border-ink/15 px-2 py-1.5" placeholder="Qty" />
           </label>
           <p v-if="!services.length" class="text-sm text-ink-soft">No active services found.</p>
+        </div>
+        <h3 class="mt-6 font-semibold text-ink">Retail inventory</h3>
+        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+          <label v-for="item in inventoryItems" :key="'inventory-' + item.id" class="flex items-center justify-between gap-3 rounded-xl border border-ink/10 p-3">
+            <div><p class="text-sm font-semibold">{{ item.name }}</p><p class="text-sm text-ink-soft">{{ money(item.selling_price) }} · Available {{ item.stock_quantity }} {{ item.unit }}</p></div>
+            <input v-model.number="selected['inventory-' + item.id]" type="number" min="0" :max="item.stock_quantity" class="w-20 rounded-lg border border-ink/15 px-2 py-1.5" placeholder="Qty" />
+          </label>
+          <p v-if="!inventoryItems.length" class="text-sm text-ink-soft">No active inventory items for this branch.</p>
         </div>
         <div class="mt-5 grid gap-3 sm:grid-cols-2">
           <label class="grid gap-1 text-sm">Customer name <input v-model="customerName" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
