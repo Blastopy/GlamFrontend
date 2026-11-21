@@ -104,6 +104,23 @@ async function checkout() {
   } finally { busy.value = false }
 }
 
+async function refundSale(sale) {
+  if (!activeSession.value) { error.value = 'Open a cash session before recording a cash refund.'; return }
+  const amount = window.prompt('Refund amount for ' + sale.receipt_number + ' (KES):')
+  if (amount === null) return
+  const value = Number(amount)
+  if (!Number.isFinite(value) || value <= 0) { error.value = 'Enter a valid refund amount.'; return }
+  const reason = window.prompt('Reason for refund:')
+  if (!reason?.trim()) return
+  try {
+    await posApi.refund(sale.id, { amount: value, method: 'cash', reason: reason.trim() })
+    notifications.success('Refund recorded.')
+    await refreshSales()
+  } catch (e) { error.value = e.response?.data?.message || 'Could not record refund.' }
+}
+
+function printReceipt() { window.print() }
+
 async function checkMpesaStatus() {
   if (!receipt.value?.mpesa_payment?.payment_id) return
   try {
@@ -175,6 +192,7 @@ onMounted(load)
           <div class="mt-3 space-y-3">
             <article v-for="sale in sales.slice(0,10)" :key="sale.id" class="border-b border-ink/5 pb-3 text-sm last:border-0">
               <div class="flex justify-between gap-2"><strong>{{ sale.receipt_number }}</strong><span class="font-semibold">{{ money(sale.total) }}</span></div><p class="mt-1 text-ink-soft">{{ new Date(sale.created_at).toLocaleString('en-KE') }} · {{ sale.status }}</p>
+              <button v-if="sale.status !== 'refunded' && sale.status !== 'cancelled' && Number(sale.paid_amount) > Number(sale.refunded_amount)" @click="refundSale(sale)" class="mt-2 text-xs font-semibold text-clay-700 underline">Record cash refund</button>
             </article>
             <p v-if="!sales.length" class="text-sm text-ink-soft">No sales recorded yet.</p>
           </div>
@@ -182,7 +200,7 @@ onMounted(load)
       </aside>
     </div>
     <div v-if="receipt" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @click.self="receipt=null">
-      <section class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <section class="print-area w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <h2 class="font-heading text-xl">Sale recorded</h2><p class="mt-1 text-sm text-ink-soft">{{ receipt.receipt_number }}</p>
         <div class="my-4 space-y-2 text-sm"><p v-for="item in receipt.items" :key="item.id" class="flex justify-between"><span>{{ item.quantity }} × {{ item.name }}</span><span>{{ money(item.line_total) }}</span></p><div class="border-t pt-3 flex justify-between font-bold"><span>Total</span><span>{{ money(receipt.total) }}</span></div></div>
         <p class="text-sm">Paid: {{ money(receipt.paid_amount) }} · {{ receipt.status }}</p>
@@ -192,8 +210,17 @@ onMounted(load)
           <p v-if="receipt.mpesa_payment.mpesa_receipt_number">Receipt: {{ receipt.mpesa_payment.mpesa_receipt_number }}</p>
           <button v-if="receipt.mpesa_payment.status === 'pending'" @click="checkMpesaStatus" class="mt-2 rounded-lg border border-amber-800/20 px-3 py-2 font-semibold">Check payment status</button>
         </div>
-        <button @click="receipt=null" class="mt-5 w-full rounded-xl bg-ink px-4 py-2.5 font-semibold text-white">Done</button>
+        <div class="mt-5 flex gap-2"><button @click="printReceipt" class="flex-1 rounded-xl border border-ink/15 px-4 py-2.5 font-semibold">Print receipt</button><button @click="receipt=null" class="flex-1 rounded-xl bg-ink px-4 py-2.5 font-semibold text-white">Done</button></div>
       </section>
     </div>
   </main>
 </template>
+
+<style>
+@media print {
+  body * { visibility: hidden !important; }
+  .print-area, .print-area * { visibility: visible !important; }
+  .print-area { position: absolute !important; inset: 0 auto auto 0 !important; width: 100% !important; max-width: none !important; box-shadow: none !important; }
+  .print-area button { display: none !important; }
+}
+</style>
