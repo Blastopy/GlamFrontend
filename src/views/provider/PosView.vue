@@ -17,6 +17,7 @@ const loyaltyCustomers = ref([])
 const loyaltyConfig = ref({ enabled: false, point_value: 0, minimum_redemption_points: 0 })
 const selectedCustomerId = ref('')
 const loyaltyPointsToRedeem = ref(0)
+const giftCardCode = ref('')
 const branchId = ref('')
 const selected = ref({})
 const customerName = ref('')
@@ -107,6 +108,7 @@ async function checkout() {
       customer_name: customerName.value || selectedCustomer.value?.name || null,
       customer_phone: customerPhone.value || selectedCustomer.value?.phone || null,
       loyalty_points: Number(loyaltyPointsToRedeem.value) > 0 ? Number(loyaltyPointsToRedeem.value) : undefined,
+      gift_card_code: giftCardCode.value.trim() || undefined,
       items: selectedItems.value,
       payments: total.value <= 0 || method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(total.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
     }
@@ -117,6 +119,7 @@ async function checkout() {
     customerPhone.value = ''
     selectedCustomerId.value = ''
     loyaltyPointsToRedeem.value = 0
+    giftCardCode.value = ''
     const phoneForPrompt = mpesaPhone.value
     mpesaPhone.value = ''
     await refreshSales()
@@ -218,6 +221,7 @@ onMounted(load)
           </label>
           <label class="grid gap-1 text-sm">Customer name <input v-model="customerName" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Phone <input v-model="customerPhone" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
+          <label class="grid gap-1 text-sm">Gift card code (optional) <input v-model.trim="giftCardCode" maxlength="32" class="rounded-lg border border-ink/15 px-3 py-2 uppercase" placeholder="FP-XXXXXXXXXXXX" /></label>
           <label class="grid gap-1 text-sm">Payment method
             <select v-model="method" class="rounded-lg border border-ink/15 px-3 py-2"><option value="cash">Cash</option><option value="mpesa">M-Pesa STK Push</option><option value="card">Card (record only)</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option></select>
           </label>
