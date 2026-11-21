@@ -139,9 +139,9 @@ async function checkout() {
     await refreshSales()
     const { data: refreshedLoyalty } = await posApi.loyaltyCustomers()
     loyaltyCustomers.value = refreshedLoyalty.customers || []
-    if (method.value === 'mpesa' && Number(data.total) > 0) {
+    if (method.value === 'mpesa' && (Number(data.total) - Number(data.gift_card_amount || 0)) > 0) {
       try {
-        const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) })
+        const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) - Number(data.gift_card_amount || 0) })
         receipt.value = { ...data, mpesa_payment: prompt }
       } catch (e) {
         error.value = e.response?.data?.message || 'Sale was recorded, but the M-Pesa prompt could not be started.'
