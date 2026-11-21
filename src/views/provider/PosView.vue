@@ -68,6 +68,7 @@ async function checkout() {
   error.value = ''
   if (!selectedItems.value.length) { error.value = 'Choose at least one service.'; return }
   if (method.value === 'cash' && !activeSession.value) { error.value = 'Open a cash session before recording cash payments.'; return }
+  if (method.value === 'mpesa' && !mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
   busy.value = true
   try {
     const payload = {
@@ -79,7 +80,6 @@ async function checkout() {
     }
     const { data } = await posApi.checkout(payload)
     if (method.value === 'mpesa') {
-      if (!mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
       const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: mpesaPhone.value, amount: Number(subtotal.value) })
       receipt.value = { ...data, mpesa_payment: prompt }
     } else {
