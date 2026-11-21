@@ -94,6 +94,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
+    path: '/dashboard/pos',
+    name: 'provider-pos',
+    component: () => import('@/views/provider/PosView.vue'),
+    meta: { requiresAuth: true, role: 'provider' },
+  },
+  {
     path: '/dashboard/clients',
     name: 'provider-clients',
     component: () => import('@/views/provider/ClientsView.vue'),
