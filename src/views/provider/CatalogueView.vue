@@ -61,6 +61,7 @@ function edit(service) {
     description: service.description,
     price: service.price,
     duration_minutes: service.duration_minutes,
+    buffer_minutes: service.buffer_minutes || 0,
   }
   imageFile.value = null
   imagePreview.value = service.image_url // show the existing photo until a new one is picked
