@@ -15,6 +15,7 @@ const appointments = useAppointmentsStore()
 const auth = useAuthStore()
 
 const selectedService = ref(null)
+const selectedServiceIds = ref([])
 const scheduledAt = ref('')
 const notes = ref('')
 const wantsHomeService = ref(false)
@@ -111,13 +112,18 @@ function pickService(service) {
     router.push({ name: 'login', query: { redirect: route.fullPath } })
     return
   }
-  selectedService.value = service
+  const selected = selectedServiceIds.value.includes(service.id)
+  selectedServiceIds.value = selected
+    ? selectedServiceIds.value.filter((id) => id !== service.id)
+    : [...selectedServiceIds.value, service.id]
+  selectedService.value = providers.current?.services?.find((item) => selectedServiceIds.value.includes(item.id)) || null
   bookedAppointment.value = null
 }
 
 function bookAnother() {
   bookedAppointment.value = null
   selectedService.value = null
+  selectedServiceIds.value = []
   scheduledAt.value = ''
   notes.value = ''
   wantsHomeService.value = false
@@ -156,10 +162,11 @@ const minScheduledAt = computed(() => {
 
 const homeServiceFee = computed(() => parseFloat(providers.current?.home_service_fee) || 0)
 
+const selectedServices = computed(() => (providers.current?.services || []).filter((service) => selectedServiceIds.value.includes(service.id)))
+const estimatedDuration = computed(() => selectedServices.value.reduce((sum, service) => sum + Number(service.duration_minutes || 0) + Number(service.buffer_minutes || 0), 0))
 const estimatedTotal = computed(() => {
-  if (!selectedService.value) return 0
-  const base = Number(selectedService.value.price)
-  return wantsHomeService.value ? base + homeServiceFee.value : base
+  const base = selectedServices.value.reduce((sum, service) => sum + Number(service.price || 0), 0)
+  return wantsHomeService.value && selectedServices.value.length ? base + homeServiceFee.value : base
 })
 
 async function submitBooking() {
@@ -178,7 +185,7 @@ async function submitBooking() {
   booking.value = true
   try {
     const appt = await appointments.book({
-      service_id: selectedService.value.id,
+      service_ids: selectedServiceIds.value,
       scheduled_at: scheduledAt.value,
       client_notes: notes.value,
       is_home_service: wantsHomeService.value,
@@ -455,9 +462,9 @@ const inputClass = 'w-full rounded-xl border border-ink/10 bg-paper/40 px-4 py-3
                       'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition',
                       selectedService?.id === s.id ? 'bg-ink text-white' : 'bg-clay-600 text-white group-hover:bg-clay-700',
                     ]">
-                      {{ selectedService?.id === s.id ? 'Selected' : 'Book' }}
+                      {{ selectedServiceIds.includes(s.id) ? 'Selected' : 'Add' }}
                       <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5" aria-hidden="true">
-                        <path v-if="selectedService?.id === s.id" d="m5.5 10.5 3 3 6-6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path v-if="selectedServiceIds.includes(s.id)" d="m5.5 10.5 3 3 6-6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         <path v-else d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
                     </span>
@@ -474,7 +481,7 @@ const inputClass = 'w-full rounded-xl border border-ink/10 bg-paper/40 px-4 py-3
                   </svg>
                 </span>
                 <h3 class="mt-5 font-heading text-xl font-semibold text-ink">Booked!</h3>
-                <p class="mt-1 text-sm text-ink-soft">{{ selectedService?.name }} · {{ new Date(bookedAppointment.scheduled_at).toLocaleString() }}</p>
+                <p class="mt-1 text-sm text-ink-soft">{{ selectedServices.map(service => service.name).join(' + ') }} · {{ new Date(bookedAppointment.scheduled_at).toLocaleString() }}</p>
                 <p v-if="bookedAppointment.is_home_service" class="mt-1 text-sm text-ink-soft">Home visit at {{ bookedAppointment.home_address }}</p>
                 <p class="mt-2 text-xs text-ink-soft">No payment needed — {{ providers.current.business_name }} will confirm shortly.</p>
                 <div class="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
@@ -489,7 +496,7 @@ const inputClass = 'w-full rounded-xl border border-ink/10 bg-paper/40 px-4 py-3
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-clay-600">Book appointment</p>
-                    <h3 class="mt-1 font-heading text-lg font-semibold text-ink">{{ selectedService.name }}</h3>
+                    <h3 class="mt-1 font-heading text-lg font-semibold text-ink">{{ selectedServices.map(service => service.name).join(' + ') }}</h3>
                   </div>
                   <button type="button" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-paper hover:text-ink" @click="selectedService = null">
                     Cancel
@@ -541,6 +548,7 @@ const inputClass = 'w-full rounded-xl border border-ink/10 bg-paper/40 px-4 py-3
                   <div>
                     <p class="text-[11px] font-medium uppercase tracking-wide text-ink-soft">Estimated total</p>
                     <p class="font-heading text-2xl font-bold text-ink">KES {{ estimatedTotal.toLocaleString() }}</p>
+                    <p v-if="estimatedDuration" class="mt-1 text-xs text-ink-soft">Approx. {{ estimatedDuration }} minutes including buffer</p>
                   </div>
                   <button type="button" :disabled="booking || !scheduledAt"
                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-clay-600/25 transition hover:bg-clay-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
