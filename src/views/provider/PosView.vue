@@ -91,7 +91,7 @@ async function checkout() {
         const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) })
         receipt.value = { ...data, mpesa_payment: prompt }
       } catch (e) {
-        error.value = e.response?.data?.message || 'Sale was recorded, but the M-Pesa prompt could not be started. Retry from the sale payment screen.'
+        error.value = e.response?.data?.message || 'Sale was recorded, but the M-Pesa prompt could not be started.'
       }
     }
     if (method.value === 'cash') {
