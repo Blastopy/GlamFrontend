@@ -11,6 +11,8 @@ const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
 const message = ref('')
+const historyCustomer = ref(null)
+const historyRows = ref([])
 const cardForm = reactive({ business_customer_id: '', amount: 1000, expires_at: '' })
 const planForm = reactive({ name: '', description: '', price: 0, duration_days: 30, discount_percent: 0 })
 const memberForm = reactive({ business_customer_id: '', membership_plan_id: '', starts_at: '' })
@@ -70,6 +72,14 @@ async function deactivate(card) {
   if (!window.confirm(`Deactivate gift card ${card.code}?`)) return
   try { await retentionApi.deactivateGiftCard(card.id); message.value = 'Gift card deactivated.'; await load() }
   catch (e) { error.value = e.response?.data?.message || 'Could not deactivate gift card.' }
+}
+
+async function showHistory(customer) {
+  try {
+    const { data } = await retentionApi.customerHistory(customer.id)
+    historyCustomer.value = data.customer
+    historyRows.value = data.subscriptions || []
+  } catch (e) { error.value = e.response?.data?.message || 'Could not load customer membership history.' }
 }
 
 async function cancelMembership(item) {
@@ -145,7 +155,7 @@ onMounted(load)
 
     <section class="mt-6 overflow-hidden rounded-2xl border border-ink/10 bg-white">
       <div class="border-b border-ink/10 p-5"><h2 class="font-heading text-xl text-ink">Customer memberships</h2></div>
-      <div class="overflow-x-auto"><table class="w-full min-w-[700px] text-left text-sm"><thead class="bg-paper text-xs uppercase tracking-wide text-ink-soft"><tr><th class="px-4 py-3">Customer</th><th class="px-4 py-3">Plan</th><th class="px-4 py-3">Starts</th><th class="px-4 py-3">Ends</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-ink/10"><tr v-for="sub in subscriptions" :key="sub.id"><td class="px-4 py-3 font-semibold">{{ sub.customer?.name }}</td><td class="px-4 py-3">{{ sub.plan?.name }}</td><td class="px-4 py-3">{{ sub.starts_at }}</td><td class="px-4 py-3">{{ sub.ends_at }}</td><td class="px-4 py-3 capitalize">{{ sub.status }}</td><td class="px-4 py-3 text-right"><button v-if="sub.status === 'active'" @click="cancelMembership(sub)" class="text-xs font-semibold text-red-700">Cancel</button></td></tr></tbody></table></div>
+      <div class="overflow-x-auto"><table class="w-full min-w-[700px] text-left text-sm"><thead class="bg-paper text-xs uppercase tracking-wide text-ink-soft"><tr><th class="px-4 py-3">Customer</th><th class="px-4 py-3">Plan</th><th class="px-4 py-3">Starts</th><th class="px-4 py-3">Ends</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-ink/10"><tr v-for="sub in subscriptions" :key="sub.id"><td class="px-4 py-3 font-semibold">{{ sub.customer?.name }}</td><td class="px-4 py-3">{{ sub.plan?.name }}</td><td class="px-4 py-3">{{ sub.starts_at }}</td><td class="px-4 py-3">{{ sub.ends_at }}</td><td class="px-4 py-3 capitalize">{{ sub.status }}</td><td class="px-4 py-3 text-right"><button @click="showHistory(sub.customer)" class="mr-3 text-xs font-semibold">History</button><button v-if="sub.status === 'active'" @click="cancelMembership(sub)" class="text-xs font-semibold text-red-700">Cancel</button></td></tr></tbody></table></div>
     </section>
   </main>
 </template>
