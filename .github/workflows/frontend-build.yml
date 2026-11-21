@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [frontend]
   push:
-    branches: [flairplace-saas-phase1, flairplace-pos-phase3, flairplace-inventory-phase4, flairplace-procurement-phase5, flairplace-stock-control-phase6, flairplace-service-consumables-phase7, flairplace-inventory-reports-phase8, flairplace-team-permissions-phase9, flairplace-financial-management-phase10, flairplace-marketing-retention-phase11, flairplace-loyalty-rewards-phase12]
+    branches: [flairplace-saas-phase1, flairplace-pos-phase3, flairplace-inventory-phase4, flairplace-procurement-phase5, flairplace-stock-control-phase6, flairplace-service-consumables-phase7, flairplace-inventory-reports-phase8, flairplace-team-permissions-phase9, flairplace-financial-management-phase10, flairplace-marketing-retention-phase11, flairplace-loyalty-rewards-phase12, flairplace-gift-cards-memberships-phase13]
 
 jobs:
   build:
