@@ -18,6 +18,7 @@ const selected = ref({})
 const customerName = ref('')
 const customerPhone = ref('')
 const mpesaPhone = ref('')
+const giftCardCode = ref('')
 const method = ref('cash')
 const openingCash = ref(0)
 const loading = ref(true)
@@ -85,6 +86,7 @@ async function checkout() {
   if (!selectedItems.value.length) { error.value = 'Choose at least one service.'; return }
   if (method.value === 'cash' && !activeSession.value) { error.value = 'Open a cash session before recording cash payments.'; return }
   if (method.value === 'mpesa' && !mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
+  if (method.value === 'gift_card' && !giftCardCode.value.trim()) { error.value = 'Enter the gift card code.'; return }
   busy.value = true
   try {
     const payload = {
@@ -92,13 +94,14 @@ async function checkout() {
       customer_name: customerName.value || null,
       customer_phone: customerPhone.value || null,
       items: selectedItems.value,
-      payments: method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(subtotal.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
+      payments: method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(subtotal.value), reference: method.value === 'gift_card' ? giftCardCode.value.trim().toUpperCase() : null, cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
     }
     const { data } = await posApi.checkout(payload)
     receipt.value = data
     selected.value = {}
     customerName.value = ''
     customerPhone.value = ''
+    giftCardCode.value = ''
     const phoneForPrompt = mpesaPhone.value
     mpesaPhone.value = ''
     await refreshSales()
@@ -196,8 +199,9 @@ onMounted(load)
           <label class="grid gap-1 text-sm">Customer name <input v-model="customerName" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Phone <input v-model="customerPhone" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Payment method
-            <select v-model="method" class="rounded-lg border border-ink/15 px-3 py-2"><option value="cash">Cash</option><option value="mpesa">M-Pesa STK Push</option><option value="card">Card (record only)</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option></select>
+            <select v-model="method" class="rounded-lg border border-ink/15 px-3 py-2"><option value="cash">Cash</option><option value="mpesa">M-Pesa STK Push</option><option value="card">Card (record only)</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option><option value="gift_card">Gift card</option></select>
           </label>
+          <label v-if="method === 'gift_card'" class="grid gap-1 text-sm">Gift card code <input v-model.trim="giftCardCode" type="text" maxlength="32" placeholder="Enter gift card code" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label v-if="method === 'mpesa'" class="grid gap-1 text-sm">Customer M-Pesa phone <input v-model="mpesaPhone" type="tel" placeholder="07XXXXXXXX" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
         </div>
         <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-4"><span class="font-semibold">Total</span><span class="font-heading text-2xl font-bold">{{ money(subtotal) }}</span></div>
