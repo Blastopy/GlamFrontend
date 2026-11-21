@@ -2,9 +2,9 @@ name: Frontend build
 
 on:
   pull_request:
-    branches: [frontend]
+    branches: [frontend, flairplace-inventory-phase4]
   push:
-    branches: [flairplace-saas-phase1, flairplace-pos-phase3, flairplace-inventory-phase4]
+    branches: [flairplace-saas-phase1, flairplace-pos-phase3, flairplace-inventory-phase4, flairplace-procurement-phase4]
 
 jobs:
   build:
