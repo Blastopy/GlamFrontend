@@ -94,6 +94,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
+    path: '/dashboard/procurement',
+    name: 'provider-procurement',
+    component: () => import('@/views/provider/ProcurementView.vue'),
+    meta: { requiresAuth: true, role: 'provider' },
+  },
+  {
     path: '/dashboard/inventory',
     name: 'provider-inventory',
     component: () => import('@/views/provider/InventoryView.vue'),
