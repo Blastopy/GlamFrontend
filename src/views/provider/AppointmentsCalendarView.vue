@@ -150,12 +150,13 @@ async function load() {
   }
 }
 async function refresh() { await load() }
-function move(direction) {
+async function move(direction) {
   const unit = mode.value === 'month' ? 'month' : mode.value === 'week' ? 'week' : 'day'
   selectedDate.value = shift(selectedDate.value, direction, unit)
+  await load()
 }
-function today() { selectedDate.value = localDate(new Date()) }
-function selectDay(date) { selectedDate.value = localDate(date); mode.value = 'day' }
+async function today() { selectedDate.value = localDate(new Date()); await load() }
+async function selectDay(date) { selectedDate.value = localDate(date); mode.value = 'day'; await load() }
 function newAppointment(date = selectedDate.value) {
   error.value = ''
   form.value = emptyForm()
@@ -221,7 +222,7 @@ function isCurrentMonth(d) { return d.getMonth() === dateAt(selectedDate.value).
 function isToday(d) { return localDate(d) === localDate(new Date()) }
 function dayHeading(d) { return d.toLocaleDateString('en-KE', { weekday: 'short' }) }
 function daySubheading(d) { return d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' }) }
-function selectMode(value) { mode.value = value }
+async function selectMode(value) { mode.value = value; await load() }
 onMounted(async () => { await loadOptions(); await load() })
 </script>
 
