@@ -8,6 +8,7 @@ const notifications = useNotificationsStore()
 const branches = ref([])
 const branchId = ref('')
 const items = ref([])
+const valuation = ref({ total_valuation: 0, total_quantity: 0, items: [] })
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
@@ -19,7 +20,11 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const { data: business } = await api.get('/business/branches')
+    const [{ data: business }, { data: valuationData }] = await Promise.all([
+      api.get('/business/branches'),
+      inventoryApi.valuation(),
+    ])
+    valuation.value = valuationData
     branches.value = Array.isArray(business) ? business : (business.data || [])
     if (!branchId.value && branches.value.length) branchId.value = String((branches.value.find(b => b.is_default) || branches.value[0]).id)
     if (branchId.value) {
@@ -71,6 +76,11 @@ onMounted(load)
       </label>
     </header>
     <p v-if="error" class="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
+    <section class="mb-6 grid gap-3 sm:grid-cols-3">
+      <div class="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm"><p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Total stock value</p><p class="mt-2 font-heading text-2xl font-semibold text-ink">{{ money(valuation.total_valuation) }}</p><p class="mt-1 text-xs text-ink-soft">Weighted-average cost across all branches</p></div>
+      <div class="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm"><p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Total units on hand</p><p class="mt-2 font-heading text-2xl font-semibold text-ink">{{ Number(valuation.total_quantity || 0).toLocaleString() }}</p><p class="mt-1 text-xs text-ink-soft">Across all inventory items and branches</p></div>
+      <div class="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm"><p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Costing method</p><p class="mt-2 font-heading text-2xl font-semibold text-ink">Weighted average</p><p class="mt-1 text-xs text-ink-soft">Updated when purchase receipts are recorded</p></div>
+    </section>
     <div class="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
       <section class="h-fit rounded-2xl border border-ink/10 bg-white p-4 shadow-sm sm:p-6">
         <h2 class="font-heading text-xl">Add inventory item</h2>
