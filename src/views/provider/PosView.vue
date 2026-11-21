@@ -40,18 +40,21 @@ const money = value => new Intl.NumberFormat('en-KE', { style: 'currency', curre
 async function load() {
   loading.value = true
   try {
-    const [options, sessionRes, salesRes] = await Promise.all([
+    const [options, sessionRes] = await Promise.all([
       api.get('/provider/calendar/options'),
-      posApi.sessions(), posApi.sales({ branch_id: branchId.value || undefined }),
+      posApi.sessions(),
     ])
     services.value = options.data.services || []
     branches.value = options.data.branches || []
     if (!branchId.value && branches.value.length) branchId.value = String((branches.value.find(b => b.is_default) || branches.value[0]).id)
     sessions.value = sessionRes.data
-    sales.value = salesRes.data
     if (branchId.value) {
-      const { data: stockData } = await inventoryApi.list({ branch_id: branchId.value })
-      inventoryItems.value = stockData.items || []
+      const [salesRes, stockRes] = await Promise.all([
+        posApi.sales({ branch_id: branchId.value }),
+        inventoryApi.list({ branch_id: branchId.value }),
+      ])
+      sales.value = salesRes.data
+      inventoryItems.value = stockRes.data.items || []
     }
   } catch (e) {
     error.value = e.response?.data?.message || 'Could not load POS.'
