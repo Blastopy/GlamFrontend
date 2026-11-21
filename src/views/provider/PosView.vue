@@ -15,6 +15,7 @@ const branchId = ref('')
 const selected = ref({})
 const customerName = ref('')
 const customerPhone = ref('')
+const mpesaPhone = ref('')
 const method = ref('cash')
 const openingCash = ref(0)
 const loading = ref(true)
@@ -74,13 +75,20 @@ async function checkout() {
       customer_name: customerName.value || null,
       customer_phone: customerPhone.value || null,
       items: selectedItems.value,
-      payments: [{ method: method.value, amount: Number(subtotal.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
+      payments: method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(subtotal.value), cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
     }
     const { data } = await posApi.checkout(payload)
-    receipt.value = data
+    if (method.value === 'mpesa') {
+      if (!mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
+      const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: mpesaPhone.value, amount: Number(subtotal.value) })
+      receipt.value = { ...data, mpesa_payment: prompt }
+    } else {
+      receipt.value = data
+    }
     selected.value = {}
     customerName.value = ''
     customerPhone.value = ''
+    mpesaPhone.value = ''
     await refreshSales()
     if (method.value === 'cash') {
       const { data: updatedSessions } = await posApi.sessions()
@@ -90,6 +98,15 @@ async function checkout() {
   } catch (e) {
     error.value = e.response?.data?.message || 'Checkout failed.'
   } finally { busy.value = false }
+}
+
+async function checkMpesaStatus() {
+  if (!receipt.value?.mpesa_payment?.payment_id) return
+  try {
+    const { data } = await posApi.paymentStatus(receipt.value.id, receipt.value.mpesa_payment.payment_id)
+    receipt.value.mpesa_payment = data
+    if (data.status === 'completed') notifications.success('M-Pesa payment confirmed.')
+  } catch (e) { error.value = e.response?.data?.message || 'Could not check M-Pesa status.' }
 }
 
 async function closeSession(session) {
@@ -134,8 +151,9 @@ onMounted(load)
           <label class="grid gap-1 text-sm">Customer name <input v-model="customerName" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Phone <input v-model="customerPhone" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Payment method
-            <select v-model="method" class="rounded-lg border border-ink/15 px-3 py-2"><option value="cash">Cash</option><option value="mpesa">M-Pesa (record only)</option><option value="card">Card (record only)</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option></select>
+            <select v-model="method" class="rounded-lg border border-ink/15 px-3 py-2"><option value="cash">Cash</option><option value="mpesa">M-Pesa STK Push</option><option value="card">Card (record only)</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option></select>
           </label>
+          <label v-if="method === 'mpesa'" class="grid gap-1 text-sm">Customer M-Pesa phone <input v-model="mpesaPhone" type="tel" placeholder="07XXXXXXXX" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
         </div>
         <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-4"><span class="font-semibold">Total</span><span class="font-heading text-2xl font-bold">{{ money(subtotal) }}</span></div>
         <button @click="checkout" :disabled="busy || subtotal <= 0" class="mt-4 w-full rounded-xl bg-ink px-4 py-3 font-semibold text-white disabled:opacity-40">{{ busy ? 'Processing…' : 'Complete sale' }}</button>
@@ -161,9 +179,15 @@ onMounted(load)
     </div>
     <div v-if="receipt" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @click.self="receipt=null">
       <section class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-        <h2 class="font-heading text-xl">Sale completed</h2><p class="mt-1 text-sm text-ink-soft">{{ receipt.receipt_number }}</p>
+        <h2 class="font-heading text-xl">Sale recorded</h2><p class="mt-1 text-sm text-ink-soft">{{ receipt.receipt_number }}</p>
         <div class="my-4 space-y-2 text-sm"><p v-for="item in receipt.items" :key="item.id" class="flex justify-between"><span>{{ item.quantity }} × {{ item.name }}</span><span>{{ money(item.line_total) }}</span></p><div class="border-t pt-3 flex justify-between font-bold"><span>Total</span><span>{{ money(receipt.total) }}</span></div></div>
         <p class="text-sm">Paid: {{ money(receipt.paid_amount) }} · {{ receipt.status }}</p>
+        <div v-if="receipt.mpesa_payment" class="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          <p>{{ receipt.mpesa_payment.message || (receipt.mpesa_payment.status === 'completed' ? 'M-Pesa payment confirmed.' : 'Waiting for customer to approve the M-Pesa prompt.') }}</p>
+          <p class="mt-1">Payment status: <strong>{{ receipt.mpesa_payment.status }}</strong></p>
+          <p v-if="receipt.mpesa_payment.mpesa_receipt_number">Receipt: {{ receipt.mpesa_payment.mpesa_receipt_number }}</p>
+          <button v-if="receipt.mpesa_payment.status === 'pending'" @click="checkMpesaStatus" class="mt-2 rounded-lg border border-amber-800/20 px-3 py-2 font-semibold">Check payment status</button>
+        </div>
         <button @click="receipt=null" class="mt-5 w-full rounded-xl bg-ink px-4 py-2.5 font-semibold text-white">Done</button>
       </section>
     </div>
