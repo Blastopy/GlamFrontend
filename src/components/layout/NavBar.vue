@@ -110,7 +110,7 @@ const primaryLinks = computed(() => {
       { to: '/dashboard/stock-control', label: 'Stock Control', icon: 'document' },
       { to: '/dashboard/service-consumables', label: 'Service Materials', icon: 'catalogue' },
       { to: '/dashboard/procurement', label: 'Purchasing', icon: 'document' },
-      { to: '/dashboard/clients', label: 'Clients', icon: 'clients' },
+      { to: '/dashboard/clients', label: 'Clients', icon: 'clients' },\n      { to: '/dashboard/crm', label: 'Customer CRM', icon: 'clients' },
       { to: '/dashboard/branches', label: 'Branches', icon: 'settings' },
       { to: '/dashboard/team', label: 'Staff & Permissions', icon: 'shield' },
       { to: '/messages', label: 'Messages', icon: 'messages', badge: unreadMessages.value },
