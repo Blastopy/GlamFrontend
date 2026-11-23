@@ -13,6 +13,10 @@ const services = ref([])
 const inventoryItems = ref([])
 const sessions = ref([])
 const sales = ref([])
+const loyaltyCustomers = ref([])
+const loyaltyConfig = ref({ enabled: false, point_value: 0, minimum_redemption_points: 0 })
+const selectedCustomerId = ref('')
+const loyaltyPointsToRedeem = ref(0)
 const branchId = ref('')
 const selected = ref({})
 const customerName = ref('')
@@ -36,19 +40,25 @@ const subtotal = computed(() => selectedItems.value.reduce((sum, row) => {
   return sum + Number(price || 0) * row.quantity
 }, 0))
 const activeSession = computed(() => sessions.value.find(s => s.branch_id === Number(branchId.value) && s.user_id === auth.user?.id && s.status === 'open'))
+const selectedCustomer = computed(() => loyaltyCustomers.value.find(c => c.id === Number(selectedCustomerId.value)) || null)
+const loyaltyDiscount = computed(() => Number(loyaltyPointsToRedeem.value || 0) * Number(loyaltyConfig.value.point_value || 0))
+const total = computed(() => Math.max(0, subtotal.value - loyaltyDiscount.value))
 const money = value => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(Number(value || 0))
 
 async function load() {
   loading.value = true
   try {
-    const [options, sessionRes] = await Promise.all([
+    const [options, sessionRes, loyaltyRes] = await Promise.all([
       api.get('/provider/calendar/options'),
       posApi.sessions(),
+      posApi.loyaltyCustomers(),
     ])
     services.value = options.data.services || []
     branches.value = options.data.branches || []
     if (!branchId.value && branches.value.length) branchId.value = String((branches.value.find(b => b.is_default) || branches.value[0]).id)
     sessions.value = sessionRes.data
+    loyaltyConfig.value = { enabled: Boolean(loyaltyRes.data.enabled), point_value: Number(loyaltyRes.data.point_value || 0), minimum_redemption_points: Number(loyaltyRes.data.minimum_redemption_points || 0) }
+    loyaltyCustomers.value = loyaltyRes.data.customers || []
     if (branchId.value) {
       const [salesRes, stockRes] = await Promise.all([
         posApi.sales({ branch_id: branchId.value }),
@@ -84,17 +94,28 @@ async function startCashSession() {
 async function checkout() {
   error.value = ''
   if (!selectedItems.value.length) { error.value = 'Choose at least one service.'; return }
-  if (method.value === 'cash' && !activeSession.value) { error.value = 'Open a cash session before recording cash payments.'; return }
-  if (method.value === 'mpesa' && !mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
+  if (loyaltyPointsToRedeem.value > 0 && !selectedCustomer.value) { error.value = 'Select a registered customer before redeeming points.'; return }
+  if (loyaltyPointsToRedeem.value > 0 && loyaltyPointsToRedeem.value < loyaltyConfig.value.minimum_redemption_points) { error.value = `At least ${loyaltyConfig.value.minimum_redemption_points} points are required to redeem.`; return }
+  if (loyaltyPointsToRedeem.value > Number(selectedCustomer.value?.points_balance || 0)) { error.value = 'The customer does not have enough points.'; return }
+  if (loyaltyDiscount.value > subtotal.value) { error.value = 'Points discount cannot exceed the sale subtotal.'; return }
+  if (method.value === 'cash' && total.value > 0 && !activeSession.value) { error.value = 'Open a cash session before recording cash payments.'; return }
+  if (method.value === 'mpesa' && total.value > 0 && !mpesaPhone.value) { error.value = 'Enter the customer phone number for the M-Pesa prompt.'; return }
   if (method.value === 'gift_card' && !giftCardCode.value.trim()) { error.value = 'Enter the gift card code.'; return }
   busy.value = true
   try {
     const payload = {
       branch_id: Number(branchId.value),
-      customer_name: customerName.value || null,
-      customer_phone: customerPhone.value || null,
+      business_customer_id: selectedCustomerId.value ? Number(selectedCustomerId.value) : null,
+      customer_name: customerName.value || selectedCustomer.value?.name || null,
+      customer_phone: customerPhone.value || selectedCustomer.value?.phone || null,
+      loyalty_points: Number(loyaltyPointsToRedeem.value) > 0 ? Number(loyaltyPointsToRedeem.value) : undefined,
       items: selectedItems.value,
-      payments: method.value === 'mpesa' ? [] : [{ method: method.value, amount: Number(subtotal.value), reference: method.value === 'gift_card' ? giftCardCode.value.trim().toUpperCase() : null, cash_session_id: method.value === 'cash' ? activeSession.value.id : null }],
+      payments: total.value <= 0 || method.value === 'mpesa' ? [] : [{
+        method: method.value,
+        amount: Number(total.value),
+        reference: method.value === 'gift_card' ? giftCardCode.value.trim().toUpperCase() : null,
+        cash_session_id: method.value === 'cash' ? activeSession.value?.id || null : null,
+      }],
     }
     const { data } = await posApi.checkout(payload)
     receipt.value = data
@@ -102,10 +123,14 @@ async function checkout() {
     customerName.value = ''
     customerPhone.value = ''
     giftCardCode.value = ''
+    selectedCustomerId.value = ''
+    loyaltyPointsToRedeem.value = 0
     const phoneForPrompt = mpesaPhone.value
     mpesaPhone.value = ''
     await refreshSales()
-    if (method.value === 'mpesa') {
+    const { data: refreshedLoyalty } = await posApi.loyaltyCustomers()
+    loyaltyCustomers.value = refreshedLoyalty.customers || []
+    if (method.value === 'mpesa' && Number(data.total) > 0) {
       try {
         const { data: prompt } = await posApi.initiateMpesa(data.id, { phone: phoneForPrompt, amount: Number(data.total) })
         receipt.value = { ...data, mpesa_payment: prompt }
@@ -113,7 +138,7 @@ async function checkout() {
         error.value = e.response?.data?.message || 'Sale was recorded, but the M-Pesa prompt could not be started.'
       }
     }
-    if (method.value === 'cash') {
+    if (method.value === 'cash' && Number(data.total) > 0) {
       const { data: updatedSessions } = await posApi.sessions()
       sessions.value = updatedSessions
     }
@@ -196,6 +221,9 @@ onMounted(load)
           <p v-if="!inventoryItems.length" class="text-sm text-ink-soft">No active inventory items for this branch.</p>
         </div>
         <div class="mt-5 grid gap-3 sm:grid-cols-2">
+          <label class="grid gap-1 text-sm">Registered customer (for loyalty)
+            <select v-model="selectedCustomerId" @change="customerName = selectedCustomer?.name || ''; customerPhone = selectedCustomer?.phone || ''; loyaltyPointsToRedeem = 0" class="rounded-lg border border-ink/15 px-3 py-2"><option value="">Walk-in customer</option><option v-for="customer in loyaltyCustomers" :key="customer.id" :value="String(customer.id)">{{ customer.name }} · {{ Number(customer.points_balance || 0) }} pts</option></select>
+          </label>
           <label class="grid gap-1 text-sm">Customer name <input v-model="customerName" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Phone <input v-model="customerPhone" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label class="grid gap-1 text-sm">Payment method
@@ -203,9 +231,10 @@ onMounted(load)
           </label>
           <label v-if="method === 'gift_card'" class="grid gap-1 text-sm">Gift card code <input v-model.trim="giftCardCode" type="text" maxlength="32" placeholder="Enter gift card code" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
           <label v-if="method === 'mpesa'" class="grid gap-1 text-sm">Customer M-Pesa phone <input v-model="mpesaPhone" type="tel" placeholder="07XXXXXXXX" class="rounded-lg border border-ink/15 px-3 py-2" /></label>
+          <label v-if="loyaltyConfig.enabled && selectedCustomer" class="grid gap-1 text-sm">Redeem loyalty points (balance: {{ Number(selectedCustomer.points_balance || 0) }})<input v-model.number="loyaltyPointsToRedeem" type="number" min="0" :max="selectedCustomer.points_balance || 0" step="1" class="rounded-lg border border-ink/15 px-3 py-2" /><span class="text-xs text-ink-soft">Minimum {{ loyaltyConfig.minimum_redemption_points }} points · {{ money(loyaltyConfig.point_value) }} per point</span></label>
         </div>
-        <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-4"><span class="font-semibold">Total</span><span class="font-heading text-2xl font-bold">{{ money(subtotal) }}</span></div>
-        <button @click="checkout" :disabled="busy || subtotal <= 0" class="mt-4 w-full rounded-xl bg-ink px-4 py-3 font-semibold text-white disabled:opacity-40">{{ busy ? 'Processing…' : 'Complete sale' }}</button>
+        <div class="mt-5 space-y-2 border-t border-ink/10 pt-4 text-sm"><div class="flex justify-between"><span>Subtotal</span><span>{{ money(subtotal) }}</span></div><div v-if="loyaltyDiscount > 0" class="flex justify-between text-emerald-700"><span>Loyalty discount ({{ loyaltyPointsToRedeem }} points)</span><span>-{{ money(loyaltyDiscount) }}</span></div><div class="flex items-center justify-between"><span class="font-semibold">Total</span><span class="font-heading text-2xl font-bold">{{ money(total) }}</span></div></div>
+        <button @click="checkout" :disabled="busy || subtotal <= 0 || loyaltyPointsToRedeem > Number(selectedCustomer?.points_balance || 0) || loyaltyDiscount > subtotal" class="mt-4 w-full rounded-xl bg-ink px-4 py-3 font-semibold text-white disabled:opacity-40">{{ busy ? 'Processing…' : 'Complete sale' }}</button>
       </section>
       <aside class="space-y-5">
         <section class="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
@@ -231,7 +260,7 @@ onMounted(load)
       <section class="print-area w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <h2 class="font-heading text-xl">Sale recorded</h2><p class="mt-1 text-sm text-ink-soft">{{ receipt.receipt_number }}</p>
         <div class="my-4 space-y-2 text-sm"><p v-for="item in receipt.items" :key="item.id" class="flex justify-between"><span>{{ item.quantity }} × {{ item.name }}</span><span>{{ money(item.line_total) }}</span></p><div class="border-t pt-3 flex justify-between font-bold"><span>Total</span><span>{{ money(receipt.total) }}</span></div></div>
-        <p class="text-sm">Paid: {{ money(receipt.paid_amount) }} · {{ receipt.status }}</p>
+        <p v-if="Number(receipt.loyalty_discount_amount || 0) > 0" class="text-sm text-emerald-700">Loyalty redemption: {{ receipt.loyalty_points_redeemed }} points · -{{ money(receipt.loyalty_discount_amount) }}</p><p class="text-sm">Paid: {{ money(receipt.paid_amount) }} · {{ receipt.status }}</p>
         <div v-if="receipt.mpesa_payment" class="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
           <p>{{ receipt.mpesa_payment.message || (receipt.mpesa_payment.status === 'completed' ? 'M-Pesa payment confirmed.' : 'Waiting for customer to approve the M-Pesa prompt.') }}</p>
           <p class="mt-1">Payment status: <strong>{{ receipt.mpesa_payment.status }}</strong></p>

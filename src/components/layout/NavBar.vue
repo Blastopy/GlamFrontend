@@ -106,6 +106,7 @@ const primaryLinks = computed(() => {
       { to: '/dashboard/finance', label: 'Finances', icon: 'document' },
       { to: '/dashboard/marketing', label: 'Promotions', icon: 'document' },
       { to: '/dashboard/gift-cards', label: 'Gift Cards', icon: 'document' },
+      { to: '/dashboard/loyalty', label: 'Loyalty Rewards', icon: 'clients' },
       { to: '/dashboard/stock-control', label: 'Stock Control', icon: 'document' },
       { to: '/dashboard/service-consumables', label: 'Service Materials', icon: 'catalogue' },
       { to: '/dashboard/procurement', label: 'Purchasing', icon: 'document' },

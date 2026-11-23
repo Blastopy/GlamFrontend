@@ -106,6 +106,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
+    path: '/dashboard/loyalty',
+    name: 'provider-loyalty',
+    component: () => import('@/views/provider/LoyaltyView.vue'),
+    meta: { requiresAuth: true, role: 'provider' },
+  },
+  {
     path: '/dashboard/marketing',
     name: 'provider-marketing',
     component: () => import('@/views/provider/MarketingView.vue'),
