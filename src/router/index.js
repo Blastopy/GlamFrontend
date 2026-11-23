@@ -160,6 +160,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'provider' },
   },
   {
+    path: '/dashboard/crm',
+    name: 'provider-crm',
+    component: () => import('@/views/provider/CustomerCrmView.vue'),
+    meta: { requiresAuth: true, role: 'provider' },
+  },
+  {
     path: '/dashboard/clients',
     name: 'provider-clients',
     component: () => import('@/views/provider/ClientsView.vue'),
