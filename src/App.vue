@@ -1,7 +1,9 @@
+
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+
 import NavBar from '@/components/layout/NavBar.vue'
 import PublicHeader from '@/components/layout/PublicHeader.vue'
 import Footer from '@/components/layout/Footer.vue'
@@ -12,9 +14,10 @@ import PageSpinner from '@/components/shared/PageSpinner.vue'
 const route = useRoute()
 const auth = useAuthStore()
 
-const showNav = computed(() => auth.isAuthenticated && !route.meta.guestOnly)
+const showNav = computed(
+  () => auth.isAuthenticated && !route.meta.guestOnly
+)
 
-// Auth screens also get the public header.
 const AUTH_PAGES = [
   'login',
   'register',
@@ -26,7 +29,6 @@ const showLoginHeader = computed(
   () => !auth.isAuthenticated && AUTH_PAGES.includes(route.name)
 )
 
-// Public pages have a minimal header.
 const showPublicHeader = computed(
   () =>
     !auth.isAuthenticated &&
@@ -38,7 +40,6 @@ const showContentContainer = computed(
   () => showNav.value || showPublicHeader.value || showLoginHeader.value
 )
 
-// Provider and admin dashboards need more horizontal space.
 const isWideDashboard = computed(
   () => auth.isProvider || auth.isAdmin
 )
@@ -80,7 +81,6 @@ const mainClasses = computed(() => {
 <template>
   <div class="flex min-h-screen w-full min-w-0 flex-col">
     <LoadingBar />
-
     <PageSpinner />
 
     <NavBar v-if="showNav" />
@@ -94,7 +94,6 @@ const mainClasses = computed(() => {
     </main>
 
     <Footer />
-
     <ToastHost />
   </div>
 </template>
