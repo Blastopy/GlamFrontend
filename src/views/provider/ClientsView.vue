@@ -252,13 +252,14 @@ onMounted(load)
                 </p>
 
                 <span class="mt-1 inline-block text-xs text-ink-soft">
-                  {{ c.type === 'manual' ? 'Manually added' : 'Registered client' }}
+                  {{ c.type === 'guest' ? 'Walk-in guest' : 'Registered client' }}
                 </span>
               </div>
             </div>
 
             <div class="flex gap-2 sm:shrink-0">
               <RouterLink
+                v-if="c.type !== 'guest'"
                 :to="`/messages/${c.id}`"
                 class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-clay-600/20 transition hover:bg-clay-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible:ring-offset-2 sm:flex-none"
               >

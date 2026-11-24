@@ -1,0 +1,19 @@
+name: Frontend build
+
+on:
+  pull_request:
+    branches: [frontend]
+  push:
+    branches: [flairplace-saas-phase1, flairplace-pos-phase3, flairplace-inventory-phase4, flairplace-procurement-phase5, flairplace-stock-control-phase6, flairplace-service-consumables-phase7, flairplace-inventory-reports-phase8, flairplace-team-permissions-phase9, flairplace-financial-management-phase10, flairplace-marketing-retention-phase11, flairplace-loyalty-giftcards-phase12, flairplace-loyalty-rewards-phase12]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - run: VITE_API_URL=https://api.flairplace.com npm run build
